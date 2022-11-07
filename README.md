@@ -2,6 +2,7 @@
 
 ## Resources
 * [BLE Guide](https://punchthrough.com/android-ble-guide/)
+* [BLE Youtube Series](https://www.youtube.com/watch?v=eZGixQzBo7Y)
 
 * [Python bluetooth scanning](https://geektechstuff.com/2020/06/01/python-and-bluetooth-part-1-scanning-for-devices-and-services-python/)
 * [Android connectivity samples](https://github.com/android/connectivity-samples/tree/master)
