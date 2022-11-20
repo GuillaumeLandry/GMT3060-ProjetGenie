@@ -2,15 +2,25 @@ package com.estimote.blank;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.estimote.internal_plugins_api.scanning.BluetoothScanner;
+import com.estimote.internal_plugins_api.scanning.EstimoteTelemetryFrameA;
+import com.estimote.internal_plugins_api.scanning.ScanHandler;
+import com.estimote.proximity_sdk.api.EstimoteCloudCredentials;
+import com.estimote.scanning_plugin.api.EstimoteBluetoothScannerFactory;
+
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -24,6 +34,9 @@ public class DummyActivity extends AppCompatActivity {
     private EditText editText;
     private Button button;
     private OkHttpClient okHttpClient;
+
+    EstimoteCloudCredentials estimoteCloudCredentials =
+            new EstimoteCloudCredentials("universal-template-4r8", "697ce7ec7ffb494e88d6c782a698b95e");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +60,7 @@ public class DummyActivity extends AppCompatActivity {
                         = new FormBody.Builder()
                         .add("sample", dummyText)
                         .build();
-                
+
                 // while building request
                 // we give our form
                 // as a parameter to post()
@@ -57,8 +70,8 @@ public class DummyActivity extends AppCompatActivity {
                 okHttpClient.newCall(request).enqueue(new Callback() {
                     @Override
                     public void onFailure(
-                        @NotNull Call call,
-                        @NotNull IOException e) {
+                            @NotNull Call call,
+                            @NotNull IOException e) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -81,5 +94,26 @@ public class DummyActivity extends AppCompatActivity {
                 });
             }
         });
+
+        BluetoothScanner bluetoothScanner =
+                new EstimoteBluetoothScannerFactory(getApplicationContext()).getSimpleScanner();
+        ScanHandler telemetryScanHandler =
+                bluetoothScanner
+                        .estimoteTelemetryFrameAScan() // or estimoteTelemetryFrameBScan
+                        .withOnPacketFoundAction(new Function1<EstimoteTelemetryFrameA, Unit>() {
+                            @Override
+                            public Unit invoke(EstimoteTelemetryFrameA estimoteTelemetryFrameA) {
+                                Log.d("TLM", "telemetry A detected: $it");
+                                return null;
+                            }
+                        })
+                        .withOnScanErrorAction(new Function1<Throwable, Unit>() {
+                            @Override
+                            public Unit invoke(Throwable throwable) {
+                                Log.e("TLM", "scan failed: $it");
+                                return null;
+                            }
+                        })
+                        .start();
     }
 }

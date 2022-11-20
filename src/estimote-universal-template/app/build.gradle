@@ -29,6 +29,7 @@ dependencies {
 
     implementation 'com.estimote:proximity-sdk:1.0.3'
     implementation 'com.estimote:mustard:0.2.1'
+    implementation 'com.estimote:scanning-plugin:0.25.0'
 
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'
 }
