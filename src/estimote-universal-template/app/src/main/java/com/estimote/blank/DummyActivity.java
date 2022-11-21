@@ -31,7 +31,7 @@ import okhttp3.Response;
 
 public class DummyActivity extends AppCompatActivity {
 
-    private EditText editText;
+    private EditText X, Y, message;
     private Button button;
     private OkHttpClient okHttpClient;
 
@@ -42,7 +42,9 @@ public class DummyActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dummy);
-        editText = findViewById(R.id.dummy_text);
+        X = findViewById(R.id.dummy_text);
+        Y = findViewById(R.id.dummy_text2);
+        message = findViewById(R.id.dummy_text3);
         button = findViewById(R.id.dummy_send);
         okHttpClient = new OkHttpClient();
 
@@ -50,7 +52,10 @@ public class DummyActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                String dummyText = editText.getText().toString();
+                String coordX = X.getText().toString();
+                String coordY = Y.getText().toString();
+                String msg = message.getText().toString();
+
 
                 // we add the information we want to send in
                 // a form. each string we want to send should
@@ -58,7 +63,9 @@ public class DummyActivity extends AppCompatActivity {
                 // dummyText with a name 'sample'
                 RequestBody formbody
                         = new FormBody.Builder()
-                        .add("sample", dummyText)
+                        .add("coordX", coordX)
+                        .add("coordY", coordY)
+                        .add("msg", msg)
                         .build();
 
                 // while building request
@@ -87,6 +94,9 @@ public class DummyActivity extends AppCompatActivity {
                                 @Override
                                 public void run() {
                                     Toast.makeText(getApplicationContext(), "data received", Toast.LENGTH_SHORT).show();
+                                    X.setText("");
+                                    Y.setText("");
+                                    message.setText("");
                                 }
                             });
                         }
