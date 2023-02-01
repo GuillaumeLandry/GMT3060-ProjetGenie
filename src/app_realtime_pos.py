@@ -1,3 +1,5 @@
+import argparse
+
 import dash
 from dash.dependencies import Output, Input
 from dash import html, dcc
@@ -17,9 +19,14 @@ import pandas as pd
 from collections import deque
 from pyorbital.orbital import Orbital
 
+import asyncio
+from bleak import BleakScanner
+
+
 # Variables globales
 #satellite = Orbital('TERRA')
 data_packets = [{"X": 0, "Y": 0, "msg": "Init"}]
+data_ble = [{"ID": 0, "RSSI": 0}]
 X = deque(maxlen = 20)
 X.append(1)
 Y = deque(maxlen = 20)
@@ -32,7 +39,6 @@ server = Flask('LocationServer')
 app = dash.Dash(__name__, server=server, external_stylesheets=external_stylesheets)
 api = Api(server)
 
-
 # Interface graphique de l'application
 app.layout = html.Div([
     dcc.Interval(
@@ -40,12 +46,11 @@ app.layout = html.Div([
         interval=1*1000, # in milliseconds
         n_intervals=0
     ),
-    html.Div([
-        html.H4('TERRA Satellite Live Feed'),
-        html.Div(id='live-update-text'),
-        dcc.Graph(id='live-update-graph'),
-
-    ]),
+    #html.Div([
+    #    html.H4('TERRA Satellite Live Feed'),
+    #    html.Div(id='live-update-text'),
+    #    dcc.Graph(id='live-update-graph'),
+    #]),
     dcc.RadioItems(
         ['Linear', 'Log'],
         'Linear',
@@ -77,6 +82,18 @@ app.layout = html.Div([
     ]),
 ])
 
+#async def run_ble_scan():
+#    devices = await BleakScanner.discover()
+#    for d in devices:
+#        print(d, d.name, d.rssi)
+#
+#    data_rssi.append(devices[0].rssi)
+#
+#    loop = asyncio.get_event_loop()
+#    loop.run_until_complete(run_ble_scan())
+#
+#    data_rssi.append(devices[0].rssi)
+
 # Série de callbacks utilisés
 @app.callback(
     Output('live-indoor-text', 'children'),
@@ -84,10 +101,13 @@ app.layout = html.Div([
 )
 def update_indoor_text(n):
     style = {'padding': '5px', 'fontSize': '16px'}
+
     return [
         html.Span('Dernier X: {0:.2f}'.format(data_packets[-1]["X"]), style=style),
         html.Span('Dernier Y: {0:.2f}'.format(data_packets[-1]["Y"]), style=style),
         html.Span('Message: {0}'.format(data_packets[-1]["msg"]), style=style),
+        html.Span('ID dernier BLE: {0}'.format((data_ble[-1]["ID"])), style=style),
+        html.Span('RSSI dernier BLE: {0:.2f}'.format((data_ble[-1]["RSSI"])), style=style),
     ]
 @app.callback(Output('live-indoor-graph', 'figure'),
               Input('interval-component', 'n_intervals'))
@@ -127,9 +147,9 @@ def update_indoor_graph(n):
 #        html.Span('Latitude: {0:.2f}'.format(lat), style=style),
 #        html.Span('Altitude: {0:0.2f}'.format(alt), style=style)
 #    ]
-#
-#
-## Multiple components can update everytime interval gets fired.
+
+
+# Multiple components can update everytime interval gets fired.
 #@app.callback(Output('live-update-graph', 'figure'),
 #              Input('interval-component', 'n_intervals'))
 #def update_graph_live(n):
@@ -186,18 +206,43 @@ def show_debug():
     print("Received (" + coordX + ", " + coordY + ")" + " with the following message : " + msg)
 
     data_packets.append({
-        "X": int(coordX),
-        "Y": int(coordY),
+        "X": float(coordX),
+        "Y": float(coordY),
         "msg": str(msg)
     })
+    
     #with open('./received_data/data_packets.txt', 'w') as fp:
     #    for packet in data_packets:
     #        # write each item on a new line
     #        fp.write("%s\n" % packet)
-    with open('./received_data/data_packets.json', 'w') as fp:
-        json.dump(data_packets, fp, indent=4)
+    if (parser.parse_args().log == True) :
+        with open('./received_data/data_packets.json', 'w') as fp:
+            json.dump(data_packets, fp, indent=4)
+    
+    return "received"
+
+@server.route("/ble", methods=["POST"])
+def show_ble():
+    id = request.form["ID"]
+    rssi = request.form["RSSI"]
+
+    data_ble.append({
+        "ID": str(id),
+        "RSSI": float(rssi),
+    })
+    
+    #with open('./received_data/data_ble.txt', 'w') as fp:
+    #    for packet in data_ble:
+    #        # write each item on a new line
+    #        fp.write("%s\n" % packet)
+    if (parser.parse_args().log == True) :
+        with open('./received_data/data_ble.json', 'w') as fp:
+            json.dump(data_ble, fp, indent=4)
     
     return "received"
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--log', action='store_true')
+
     app.run_server(host='0.0.0.0', port=5000, debug=False)

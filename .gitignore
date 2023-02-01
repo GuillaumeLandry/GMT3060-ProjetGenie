@@ -1,3 +1,7 @@
+# Added ignores
+*.json
+*.txt
+
 # Built application files
 *.apk
 *.aar

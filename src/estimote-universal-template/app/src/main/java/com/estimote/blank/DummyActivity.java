@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -48,6 +49,11 @@ public class DummyActivity extends AppCompatActivity {
         button = findViewById(R.id.dummy_send);
         okHttpClient = new OkHttpClient();
 
+        WebView myWebView = (WebView) findViewById(R.id.webview);
+        myWebView.getSettings().setJavaScriptEnabled(true);
+        myWebView.getSettings().setDomStorageEnabled(true);
+        myWebView.loadUrl("http://10.248.28.89:5000");
+
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -71,7 +77,7 @@ public class DummyActivity extends AppCompatActivity {
                 // while building request
                 // we give our form
                 // as a parameter to post()
-                Request request = new Request.Builder().url("http://192.168.0.103:5000/debug")
+                Request request = new Request.Builder().url("http://10.248.28.89:5000/debug")
                         .post(formbody)
                         .build();
                 okHttpClient.newCall(request).enqueue(new Callback() {
@@ -104,26 +110,5 @@ public class DummyActivity extends AppCompatActivity {
                 });
             }
         });
-
-        BluetoothScanner bluetoothScanner =
-                new EstimoteBluetoothScannerFactory(getApplicationContext()).getSimpleScanner();
-        ScanHandler telemetryScanHandler =
-                bluetoothScanner
-                        .estimoteTelemetryFrameAScan() // or estimoteTelemetryFrameBScan
-                        .withOnPacketFoundAction(new Function1<EstimoteTelemetryFrameA, Unit>() {
-                            @Override
-                            public Unit invoke(EstimoteTelemetryFrameA estimoteTelemetryFrameA) {
-                                Log.d("TLM", "telemetry A detected: $it");
-                                return null;
-                            }
-                        })
-                        .withOnScanErrorAction(new Function1<Throwable, Unit>() {
-                            @Override
-                            public Unit invoke(Throwable throwable) {
-                                Log.e("TLM", "scan failed: $it");
-                                return null;
-                            }
-                        })
-                        .start();
     }
 }
