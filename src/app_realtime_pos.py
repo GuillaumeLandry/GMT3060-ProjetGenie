@@ -1,37 +1,33 @@
 import argparse
 
 import dash
-from dash.dependencies import Output, Input
+from dash.dependencies import Output, Input, State
 from dash import html, dcc
-
-import plotly.express as px
-import plotly
-import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 
 from flask import Flask, request
 from flask_restful import Api
+import plotly.express as px
+import plotly
 
-import datetime
 import json
-import random
 import pandas as pd
 from collections import deque
-from pyorbital.orbital import Orbital
-
-import asyncio
-from bleak import BleakScanner
-
+import plotly.graph_objs as go
 
 # Variables globales
-#satellite = Orbital('TERRA')
-data_packets = [{"X": 0, "Y": 0, "msg": "Init"}]
-data_ble = [{"ID": 0, "RSSI": 0}]
+data_ble = []
 X = deque(maxlen = 20)
 X.append(1)
 Y = deque(maxlen = 20)
 Y.append(1)
-df = pd.read_csv('https://plotly.github.io/datasets/country_indicators.csv')
+devices = []
+beacons = pd.read_csv("./beacons.txt", sep=" ", header=None)
+points = pd.read_csv("./points.txt", sep=" ", header=None)
+beacons_options = [{'label': beacons.at[i,0], 'value':beacons.at[i,0]} for i in range(len(beacons))]
+points_options = [{'label': points.at[i,0], 'value':points.at[i,0]} for i in range(len(points))]
+etude_en_cours = False
+etude_name = "etude_1"
 
 # Setup du serveur et de l'application 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -41,60 +37,71 @@ api = Api(server)
 
 # Interface graphique de l'application
 app.layout = html.Div([
+    html.Div(id='placeholder1'),
+
     dcc.Interval(
         id='interval-component',
         interval=1*1000, # in milliseconds
         n_intervals=0
     ),
-    #html.Div([
-    #    html.H4('TERRA Satellite Live Feed'),
-    #    html.Div(id='live-update-text'),
-    #    dcc.Graph(id='live-update-graph'),
-    #]),
-    dcc.RadioItems(
-        ['Linear', 'Log'],
-        'Linear',
-        id='crossfilter-xaxis-type',
-        labelStyle={'display': 'inline-block', 'marginTop': '5px'}
+    html.H1('Tableau de bord'),
+    html.P('Appareils connectés :'),
+    html.Li(
+        devices,
+        value='Aucun appareil connecté',
+        style={'margin': '1%'}
     ),
-    dcc.ConfirmDialogProvider(
-        children=html.Button(
-            'Click Me',
-        ),
-        id='danger-danger',
-        message='Danger danger! Are you sure you want to continue?'
-    ),
+    html.Hr(),
+    dcc.Checklist(
+        options=beacons_options,
+        style={'width': '10%', 'display': 'inline-block'}
+    ),                
     dcc.Dropdown(
-        df['Indicator Name'].unique(),
-        'Fertility rate, total (births per woman)',
+        options=points_options,
         id='crossfilter-xaxis-column',
+        style={'width': '40%', 'display': 'inline-block'},
     ),
-    html.Div(
-        className="trend",
-        children=[
-            html.Ul(id='my-list', children=[html.Li(i) for i in data_packets])
-        ],
+    dcc.Input(id="etude", type="text", placeholder="Nom de l'étude", style={'marginRight':'10px'}),
+    html.Button(
+        'Démarrer l\'étude',
+        id="btn-start"
     ),
+    html.Button(
+        'Arrêter l\'étude',
+        id="btn-stop"
+    ),
+    html.Hr(),
     html.Div([
-        html.H4('Live Feed Indoor Location Feed'),
+        html.H4('Position de l\'utilisateur'),
         html.Div(id='live-indoor-text'),
-        dcc.Graph(id='live-indoor-graph'),
+        dcc.Graph(id='live-indoor-graph', animate=True),
     ]),
-])
+],style={'margin': '1%'})
 
-#async def run_ble_scan():
-#    devices = await BleakScanner.discover()
-#    for d in devices:
-#        print(d, d.name, d.rssi)
-#
-#    data_rssi.append(devices[0].rssi)
-#
-#    loop = asyncio.get_event_loop()
-#    loop.run_until_complete(run_ble_scan())
-#
-#    data_rssi.append(devices[0].rssi)
+@app.callback(
+    Output('etude', 'value'),
+    Input('btn-start', 'n_clicks'),
+    State('etude', 'value')
+)
+def start_etude(n_clicks, value):
+    global etude_en_cours
+    etude_en_cours = True
 
-# Série de callbacks utilisés
+    global etude_name
+    etude_name = value
+
+    return ""
+
+@app.callback(
+    Output('placeholder1', 'children'),
+    Input('btn-stop', 'n_clicks'),
+)
+def stop_etude(n_clicks):
+    global etude_en_cours
+    etude_en_cours = False
+    
+    return ""
+
 @app.callback(
     Output('live-indoor-text', 'children'),
     Input('interval-component', 'n_intervals')
@@ -102,141 +109,77 @@ app.layout = html.Div([
 def update_indoor_text(n):
     style = {'padding': '5px', 'fontSize': '16px'}
 
-    return [
-        html.Span('Dernier X: {0:.2f}'.format(data_packets[-1]["X"]), style=style),
-        html.Span('Dernier Y: {0:.2f}'.format(data_packets[-1]["Y"]), style=style),
-        html.Span('Message: {0}'.format(data_packets[-1]["msg"]), style=style),
-        html.Span('ID dernier BLE: {0}'.format((data_ble[-1]["ID"])), style=style),
-        html.Span('RSSI dernier BLE: {0:.2f}'.format((data_ble[-1]["RSSI"])), style=style),
-    ]
+    if (len(data_ble)) > 0:
+        return [
+            html.Span('Timestamp: {0}\n'.format((data_ble[-1]["Timestamp"])), style=style),
+            html.Span('ReceiverDevice: {0}\n'.format((data_ble[-1]["ReceiverDevice"])), style=style),
+            html.Span('BLEDevice: {0}\n'.format((data_ble[-1]["BLEDevice"])), style=style),
+            html.Span('RSSI: {0:.2f}\n'.format((data_ble[-1]["RSSI"])), style=style),
+        ]
+    else :
+        return html.Span('')
+
 @app.callback(Output('live-indoor-graph', 'figure'),
               Input('interval-component', 'n_intervals'))
 def update_indoor_graph(n):
-    data = {
-        'time': [],
-        'X': [],
-        'Y': [],
-    }
+    X=[]
+    Y=[]
 
-    data['X'].append(data_packets[-1]["X"])
-    data['Y'].append(data_packets[-1]["Y"])
+    data = plotly.graph_objs.Scatter(
+        x=X,
+        y=Y,
+        name='Scatter',
+        mode='lines+markers'
+    )
 
-    fig = make_subplots(rows=1, cols=1, vertical_spacing=0.2)
-    fig['layout']['margin'] = {
-        'l': 30, 'r': 10, 'b': 30, 't': 10
-    }
-    fig['layout']['legend'] = {'x': 0, 'y': 1, 'xanchor': 'left'}
-
-    fig.append_trace({
-        'x': data["X"],
-        'y': data["Y"],
-        'name': 'Altitude',
-        'mode': 'lines+markers',
-        'type': 'scatter'
-    }, 1, 1)
-
-    return fig
-
-#@app.callback(Output('live-update-text', 'children'),
-#              Input('interval-component', 'n_intervals'))
-#def update_metrics(n):
-#    lon, lat, alt = satellite.get_lonlatalt(datetime.datetime.now())
-#    style = {'padding': '5px', 'fontSize': '16px'}
-#    return [
-#        html.Span('Longitude: {0:.2f}'.format(lon), style=style),
-#        html.Span('Latitude: {0:.2f}'.format(lat), style=style),
-#        html.Span('Altitude: {0:0.2f}'.format(alt), style=style)
-#    ]
+    if (len(data_ble)>0):
+        for elem in data_ble:
+            if elem['BLEDevice'] == 'FC:CF:C5:18:B0:E8':
+                X.append(elem['Timestamp'])
+                Y.append(elem['RSSI'])
 
 
-# Multiple components can update everytime interval gets fired.
-#@app.callback(Output('live-update-graph', 'figure'),
-#              Input('interval-component', 'n_intervals'))
-#def update_graph_live(n):
-#    satellite = Orbital('TERRA')
-#    data = {
-#        'time': [],
-#        'Latitude': [],
-#        'Longitude': [],
-#        'Altitude': []
-#    }
-#
-#    # Collect some data
-#    for i in range(180):
-#        time = datetime.datetime.now() - datetime.timedelta(seconds=i*20)
-#        lon, lat, alt = satellite.get_lonlatalt(
-#            time
-#        )
-#        data['Longitude'].append(lon)
-#        data['Latitude'].append(lat)
-#        data['Altitude'].append(alt)
-#        data['time'].append(time)
-#
-#    # Create the graph with subplots
-#    fig = plotly.subplots.make_subplots(rows=2, cols=1, vertical_spacing=0.2)
-#    fig['layout']['margin'] = {
-#        'l': 30, 'r': 10, 'b': 30, 't': 10
-#    }
-#    fig['layout']['legend'] = {'x': 0, 'y': 1, 'xanchor': 'left'}
-#
-#    fig.append_trace({
-#        'x': data['time'],
-#        'y': data['Altitude'],
-#        'name': 'Altitude',
-#        'mode': 'lines+markers',
-#        'type': 'scatter'
-#    }, 1, 1)
-#    fig.append_trace({
-#        'x': data['Longitude'],
-#        'y': data['Latitude'],
-#        'text': data['time'],
-#        'name': 'Longitude vs Latitude',
-#        'mode': 'lines+markers',
-#        'type': 'scatter'
-#    }, 2, 1)
-#
-#    return fig
+        data = plotly.graph_objs.Scatter(
+            x=X,
+            y=Y,
+            name='Scatter',
+            mode='lines+markers'
+        )
 
-# Endpoint qui gère les données provenant de l'application Android
-@server.route("/debug", methods=["POST"])
-def show_debug():
-    coordX = request.form["coordX"]
-    coordY = request.form["coordY"]
-    msg = request.form["msg"]
-    print("Received (" + coordX + ", " + coordY + ")" + " with the following message : " + msg)
+        return {'data': [data], 'layout': go.Layout(xaxis=dict(range=[min(X), max(X)]),
+                                                    yaxis=dict(range=[min(Y), max(Y)]),
+                                                    title='Flux RSSI de la balise ' + 'FC:CF:C5:18:B0:E8')}
 
-    data_packets.append({
-        "X": float(coordX),
-        "Y": float(coordY),
-        "msg": str(msg)
-    })
-    
-    #with open('./received_data/data_packets.txt', 'w') as fp:
-    #    for packet in data_packets:
-    #        # write each item on a new line
-    #        fp.write("%s\n" % packet)
-    if (parser.parse_args().log == True) :
-        with open('./received_data/data_packets.json', 'w') as fp:
-            json.dump(data_packets, fp, indent=4)
-    
-    return "received"
+    return {'data': [data], 'layout': go.Layout(xaxis=dict(range=[0, 0]),
+                                                    yaxis=dict(range=[0, 0]),
+                                                    title='Flux RSSI de la balise ' + 'FC:CF:C5:18:B0:E8')}
 
 @server.route("/ble", methods=["POST"])
 def show_ble():
-    id = request.form["ID"]
+    timestamp = request.form["Timestamp"]
+    receiverDevice = request.form["ReceiverDevice"]
+    bleDevice = request.form["BLEDevice"]
     rssi = request.form["RSSI"]
 
+    if (receiverDevice not in devices):
+        devices.append(receiverDevice)
+
+    ts = timestamp.split(" ")
+    ts = ts[-3].split(":")
+    ts_float = float(ts[0]) + float(ts[1])/60 + float(ts[2])/3600
+
     data_ble.append({
-        "ID": str(id),
+        "Timestamp": float(ts_float),
+        "ReceiverDevice": str(receiverDevice),
+        "BLEDevice": str(bleDevice),
         "RSSI": float(rssi),
     })
     
-    #with open('./received_data/data_ble.txt', 'w') as fp:
-    #    for packet in data_ble:
-    #        # write each item on a new line
-    #        fp.write("%s\n" % packet)
     if (parser.parse_args().log == True) :
-        with open('./received_data/data_ble.json', 'w') as fp:
+        with open('./etudes/' + etude_name + '.txt', 'w') as fp:
+            for packet in data_ble:
+                fp.write("%s\n" % packet)
+        with open('./etudes/' + etude_name + '.json', 'w') as fp:
             json.dump(data_ble, fp, indent=4)
     
     return "received"

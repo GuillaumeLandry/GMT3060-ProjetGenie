@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.example.receiver.MainActivity;
 import com.example.receiver.R;
@@ -29,6 +30,9 @@ public class Settings extends Fragment implements View.OnClickListener {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        TextView actual = getView().findViewById(R.id.actual);
+        actual.setText(MainActivity.getURL());
+
         btnApply = view.findViewById(R.id.btn_apply);
         btnApply.setOnClickListener(this);
     }
@@ -39,6 +43,10 @@ public class Settings extends Fragment implements View.OnClickListener {
             case R.id.btn_apply:
                 EditText userInput = getView().findViewById(R.id.user_input);
                 MainActivity.setURL(userInput.getText().toString());
+                userInput.setText("");
+
+                TextView actual = getView().findViewById(R.id.actual);
+                actual.setText(MainActivity.getURL());
         }
     }
 }

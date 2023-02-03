@@ -1,6 +1,5 @@
 # Added ignores
-*.json
-*.txt
+src/etudes/*
 
 # Built application files
 *.apk

@@ -11,6 +11,7 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -19,6 +20,7 @@ import com.google.android.material.tabs.TabLayout;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Calendar;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -30,7 +32,7 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static String urlServer = "http://192.168.0.100:5000";
+    private static String urlServer = "http://10.248.28.89:5000";
     private static OkHttpClient okHttpClient;
     private static Request request;
     private static BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -55,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
         viewPager2 = findViewById(R.id.view_pager);
         myViewPagerAdapter = new MyViewPagerAdapter(this);
         viewPager2.setAdapter(myViewPagerAdapter);
+        viewPager2.setUserInputEnabled(false);
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -122,7 +125,9 @@ public class MainActivity extends AppCompatActivity {
             // SEND DATA TO SERVER
             RequestBody formbody
                     = new FormBody.Builder()
-                    .add("ID", device.getAddress())
+                    .add("Timestamp", Calendar.getInstance().getTime().toString())
+                    .add("ReceiverDevice", Build.MODEL + " (" + Build.ID + ")")
+                    .add("BLEDevice", device.getAddress())
                     .add("RSSI", String.valueOf(result.getRssi()))
                     .build();
             Request request = new Request.Builder().url(getURL() + "/ble")
