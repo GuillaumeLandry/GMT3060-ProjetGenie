@@ -1,6 +1,7 @@
 import argparse
 
 import dash
+import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input, State
 from dash import html, dcc
 from plotly.subplots import make_subplots
@@ -16,11 +17,11 @@ from collections import deque
 import plotly.graph_objs as go
 
 # Variables globales
-data_ble = []
 X = deque(maxlen = 20)
 X.append(1)
 Y = deque(maxlen = 20)
 Y.append(1)
+data_ble = []
 devices = []
 beacons = pd.read_csv("./beacons.txt", sep=" ", header=None)
 points = pd.read_csv("./points.txt", sep=" ", header=None)
@@ -37,30 +38,140 @@ api = Api(server)
 
 # Interface graphique de l'application
 app.layout = html.Div([
-    html.Div(id='placeholder1'),
-
+    ######
+    ## Intervalle de rafraîchissement de la page web
+    ######
     dcc.Interval(
         id='interval-component',
         interval=1*1000, # in milliseconds
         n_intervals=0
     ),
     html.H1('Tableau de bord'),
-    html.P('Appareils connectés :'),
-    html.Li(
-        devices,
-        value='Aucun appareil connecté',
-        style={'margin': '1%'}
-    ),
+
+    ######
+    ## Graphique de la position de l'utilisateur
+    ######
     html.Hr(),
-    dcc.Checklist(
-        options=beacons_options,
-        style={'width': '10%', 'display': 'inline-block'}
-    ),                
-    dcc.Dropdown(
-        options=points_options,
-        id='crossfilter-xaxis-column',
-        style={'width': '40%', 'display': 'inline-block'},
-    ),
+    html.Div([
+        html.H4('Position de l\'utilisateur'),
+        html.Div(id='live-indoor-text'),
+        dcc.Graph(id='live-indoor-graph', animate=True),
+    ]),
+
+    ######
+    ## Sélection des beacons utilisés et leur position pour l'étude
+    ######
+    html.Hr(),
+    html.Div([
+        html.H3('Paramètres de l\'étude'),
+        html.Div(id='placeholder1'),
+        html.Div([
+            dcc.Checklist(
+                id=beacons.at[0,0]+'_checklist',
+                options=[{'label': beacons.at[0,0] + ' ->', 'value': 'true'}],
+                style={'display': 'inline-block', 'color':'red'}
+            ),     
+            dcc.Dropdown(
+                id=beacons.at[0,0]+'_dropdown',
+                options=points_options,
+                style={'marginLeft': '5px', 'width': '35%', 'display': 'inline-block'},
+            ),
+        ], style={
+            'display': 'flex',
+            'alignItems': 'center',
+            'height': '100%',
+        }),
+        html.Br(),
+        html.Div([
+            dcc.Checklist(
+                id=beacons.at[1,0]+'_checklist',
+                options=[{'label': beacons.at[1,0] + ' ->', 'value': 'true'}],
+                style={'display': 'inline-block', 'color':'red'}
+            ),     
+            dcc.Dropdown(
+                id=beacons.at[1,0]+'_dropdown',
+                options=points_options,
+                style={'marginLeft': '5px', 'width': '35%', 'display': 'inline-block'},
+            ),
+        ], style={
+            'display': 'flex',
+            'alignItems': 'center',
+            'height': '100%',
+        }),
+        html.Br(),
+        html.Div([
+            dcc.Checklist(
+                id=beacons.at[2,0]+'_checklist',
+                options=[{'label': beacons.at[2,0] + ' ->', 'value': 'true'}],
+                style={'display': 'inline-block', 'color':'red'}
+            ),     
+            dcc.Dropdown(
+                id=beacons.at[2,0]+'_dropdown',
+                options=points_options,
+                style={'marginLeft': '5px', 'width': '35%', 'display': 'inline-block'},
+            ),
+        ], style={
+            'display': 'flex',
+            'alignItems': 'center',
+            'height': '100%',
+        }),
+        html.Br(),
+        html.Div([
+            dcc.Checklist(
+                id=beacons.at[3,0]+'_checklist',
+                options=[{'label': beacons.at[3,0] + ' ->', 'value': 'true'}],
+                style={'display': 'inline-block', 'color':'red'}
+            ),     
+            dcc.Dropdown(
+                id=beacons.at[3,0]+'_dropdown',
+                options=points_options,
+                style={'marginLeft': '5px', 'width': '35%', 'display': 'inline-block'},
+            ),
+        ], style={
+            'display': 'flex',
+            'alignItems': 'center',
+            'height': '100%',
+        }),
+        html.Br(),
+        html.Div([
+            dcc.Checklist(
+                id=beacons.at[4,0]+'_checklist',
+                options=[{'label': beacons.at[4,0] + ' ->', 'value': 'true'}],
+                style={'display': 'inline-block', 'color':'red'}
+            ),     
+            dcc.Dropdown(
+                id=beacons.at[4,0]+'_dropdown',
+                options=points_options,
+                style={'marginLeft': '5px', 'width': '35%', 'display': 'inline-block'},
+            ),
+        ], style={
+            'display': 'flex',
+            'alignItems': 'center',
+            'height': '100%',
+        }),
+        html.Br(),
+        html.Div([
+            dcc.Checklist(
+                id=beacons.at[5,0]+'_checklist',
+                options=[{'label': beacons.at[5,0] + ' ->', 'value': 'true'}],
+                style={'display': 'inline-block', 'color':'red'}
+            ),     
+            dcc.Dropdown(
+                id=beacons.at[5,0]+'_dropdown',
+                options=points_options,
+                style={'marginLeft': '5px', 'width': '35%', 'display': 'inline-block'},
+            ),
+        ], style={
+            'display': 'flex',
+            'alignItems': 'center',
+            'height': '100%',
+        }),
+        html.Br(),
+    ]),
+
+    ######
+    ## Nom et bouttons pour lancer l'étude
+    ######
     dcc.Input(id="etude", type="text", placeholder="Nom de l'étude", style={'marginRight':'10px'}),
     html.Button(
         'Démarrer l\'étude',
@@ -70,16 +181,86 @@ app.layout = html.Div([
         'Arrêter l\'étude',
         id="btn-stop"
     ),
-    html.Hr(),
-    html.Div([
-        html.H4('Position de l\'utilisateur'),
-        html.Div(id='live-indoor-text'),
-        dcc.Graph(id='live-indoor-graph', animate=True),
-    ]),
+
+    ######
+    ## Liste des appareils connectés
+    ######
+    #html.Hr(),
+    #html.P('Appareils connectés :'),
+    #html.Li(
+    #    devices,
+    #    value='Aucun appareil connecté',
+    #    style={'margin': '1%'}
+    #),
 ],style={'margin': '1%'})
 
+######
+## Callbacks des choix de beacons utilisés pour l'étude
+######
 @app.callback(
-    Output('etude', 'value'),
+    Output('B1_checklist', 'style'),
+    Input('B1_checklist', 'value'),
+)
+def B1_output(value):
+    if value == ['true']:
+        return {'color': 'green','font-weight': 'bold'}
+    else:
+        return {'color': 'red','font-weight': 'normal'}
+
+@app.callback(
+    Output('B2_checklist', 'style'),
+    Input('B2_checklist', 'value'),
+)
+def B2_output(value):
+    if value == ['true']:
+        return {'color': 'green','font-weight': 'bold'}
+    else:
+        return {'color': 'red','font-weight': 'normal'}
+
+@app.callback(
+    Output('B3_checklist', 'style'),
+    Input('B3_checklist', 'value'),
+)
+def B3_output(value):
+    if value == ['true']:
+        return {'color': 'green','font-weight': 'bold'}
+    else:
+        return {'color': 'red','font-weight': 'normal'}
+
+@app.callback(
+    Output('B4_checklist', 'style'),
+    Input('B4_checklist', 'value'),
+)
+def B4_output(value):
+    if value == ['true']:
+        return {'color': 'green','font-weight': 'bold'}
+    else:
+        return {'color': 'red','font-weight': 'normal'}
+@app.callback(
+    Output('B5_checklist', 'style'),
+    Input('B5_checklist', 'value'),
+)
+def B5_output(value):
+    if value == ['true']:
+        return {'color': 'green','font-weight': 'bold'}
+    else:
+        return {'color': 'red','font-weight': 'normal'}
+
+@app.callback(
+    Output('B6_checklist', 'style'),
+    Input('B6_checklist', 'value'),
+)
+def B6_output(value):
+    if value == ['true']:
+        return {'color': 'green','font-weight': 'bold'}
+    else:
+        return {'color': 'red','font-weight': 'normal'} 
+
+######
+## Callbacks des boutons pour démarrer et arrêter l'étude
+######
+@app.callback(
+    Output('placeholder1', 'children'),
     Input('btn-start', 'n_clicks'),
     State('etude', 'value')
 )
@@ -93,15 +274,18 @@ def start_etude(n_clicks, value):
     return ""
 
 @app.callback(
-    Output('placeholder1', 'children'),
+    Output('etude-started', 'style'),
     Input('btn-stop', 'n_clicks'),
 )
 def stop_etude(n_clicks):
     global etude_en_cours
     etude_en_cours = False
     
-    return ""
+    return {'display': 'block'}
 
+######
+## Callbacks pour la mise à jour des informations de la position de l'utilisateur
+######
 @app.callback(
     Output('live-indoor-text', 'children'),
     Input('interval-component', 'n_intervals')
@@ -155,7 +339,7 @@ def update_indoor_graph(n):
                                                     title='Flux RSSI de la balise ' + 'FC:CF:C5:18:B0:E8')}
 
 @server.route("/ble", methods=["POST"])
-def show_ble():
+def process_ble_data():
     timestamp = request.form["Timestamp"]
     receiverDevice = request.form["ReceiverDevice"]
     bleDevice = request.form["BLEDevice"]
