@@ -6,7 +6,7 @@ function etude_start() {
     var etude_params = document.getElementById("etude-params");
     etude_params.style.display = "none";
 
-
+    
 }
 
 function etude_stop() {

@@ -9,6 +9,13 @@ class Backend():
         self.timestamps = []
         self.graph_data = []
 
+        self.B1_list = []
+        self.B2_list = []
+        self.B3_list = []
+
+        # TODO Définir interaction des paramètres d'étude avec le calcul de position
+        self.params_etude = {'B1': '', 'B2': 'p6'}
+
     def set_args(self, parser):
         self.logging = parser.parse_args().log
 
@@ -28,6 +35,8 @@ class Backend():
 
         ts_float = self.format_timestamp(timestamp)
 
+        self.classer_donnees() # B1 -> B1_list, B2 -> B2_list
+
         self.data_ble.append({
             "Timestamp": float(ts_float),
             "ReceiverDevice": str(receiverDevice),
@@ -39,7 +48,31 @@ class Backend():
         
         return "received"
 
+    def classer_donnees(self, request):
+        pass
+
+    def update_params_etude(self, request):
+        # new_params = request['qwrqr']
+        
+        # self.params_etude = new_params
+        pass
+
+    def essaye_calcul_position_parmi_les_listes_B1_B6(self):
+        
+        #for elem in self.params_etude:
+        #    if elem['B1'] != '':
+
+        pass
+
     def provide_data(self):
+        self.essaye_calcul_position_parmi_les_listes_B1_B6()
+        # Utilise seulement les données si assez récentes
+
+        #self.positions_calculees = []
+        #self.positions_calculees = [{'x': 12, 'y': 54}, {'x': 12, 'y': 54}, {'x': 12, 'y': 54}]
+
+        #return self.positions_calculees
+
         data = []
         for elem in self.data_ble:
             if elem['BLEDevice'] == 'FC:CF:C5:18:B0:E8':

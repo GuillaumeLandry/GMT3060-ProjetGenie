@@ -13,6 +13,10 @@ def render():
 def process():
     return backend.process_data(request)
 
+@app.route("/etude", methods=["POST"])
+def provide():
+    return backend.update_params_etude()
+
 @app.route("/provide", methods=["GET"])
 def provide():
     return backend.provide_data()
