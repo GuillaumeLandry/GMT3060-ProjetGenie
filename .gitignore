@@ -1,5 +1,6 @@
 # Added ignores
 src/etudes/*
+__pycache__/
 
 # Built application files
 *.apk
