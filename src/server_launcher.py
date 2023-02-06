@@ -1,5 +1,4 @@
 import argparse
-import json
 import server_backend as server_backend
 from flask import Flask, request, render_template
 

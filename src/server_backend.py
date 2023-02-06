@@ -1,6 +1,5 @@
 import json
-from flask import render_template, jsonify
-import random
+from flask import jsonify
 
 class Backend():
     def __init__(self):
