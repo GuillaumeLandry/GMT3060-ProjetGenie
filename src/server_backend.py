@@ -27,6 +27,8 @@ class Backend():
         self.b2 = Beacon(all_beacons[1]['name'], all_beacons[1]['mac'])
         self.b3 = Beacon(all_beacons[2]['name'], all_beacons[2]['mac'])
         self.b4 = Beacon(all_beacons[3]['name'], all_beacons[3]['mac'])
+        self.b5 = Beacon(all_beacons[4]['name'], all_beacons[4]['mac'])
+        self.b6 = Beacon(all_beacons[5]['name'], all_beacons[5]['mac'])
         self.used_beacons = []
         self.start_ = False
         self.params_setted = False
@@ -35,7 +37,7 @@ class Backend():
         self.logging = parser.parse_args().log
 
     def start_getting_data(self):
-        if self.start_ == False:
+        if self.start_ == False and self.params_setted == True:
             self.start_ = True
             print('________________________START GETTING DATA_______________')
 
@@ -45,7 +47,7 @@ class Backend():
         receiverDevice = request.form["ReceiverDevice"]
         bleDevice = request.form["BLEDevice"]
         rssi = request.form["RSSI"]
-
+        # on peut creer une classe générale pour beacons et écrire ça dans une-deux lignes, au besoin
         if bleDevice == self.b1.mac:
             self.b1.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
         elif bleDevice == self.b2.mac:
@@ -54,14 +56,18 @@ class Backend():
             self.b3.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
         elif bleDevice == self.b4.mac:
             self.b4.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
+        elif bleDevice == self.b5.mac:
+            self.b5.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
+        elif bleDevice == self.b6.mac:
+            self.b6.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
         self.save_to_disk()
         self.start_getting_data()
         return "received"
 
     def update_params_etude(self, request):
-        print('________params setted__________')
 
         new_params = request['params']
+        print('________params setted________________', new_params)
         points = get_used_points(new_params.values())
         
         for point in points:
@@ -77,6 +83,15 @@ class Backend():
             elif new_params["B4"] == point.name:
                 self.b4.set_beacon_on_point(point)
                 self.used_beacons.append(self.b4)
+            elif new_params["B5"] == point.name:
+                self.b5.set_beacon_on_point(point)
+                self.used_beacons.append(self.b5)
+            elif new_params["B6"] == point.name:
+                self.b6.set_beacon_on_point(point)
+                self.used_beacons.append(self.b6)
+            else:
+                pass
+            # throw error pas de pointe associée... qqch comme ça
         
         self.filename = new_params["filename"]
         self.params_setted = True
@@ -84,33 +99,40 @@ class Backend():
     def essaye_calcul_position_parmi_les_listes_B1_B6(self):
         now = datetime.now()
         circles = []
-        if len(self.used_beacons) >= 3: 
+        
+        if len(self.used_beacons) >= 3: # minimum qu'on a besoin 
             for beacon in self.used_beacons:
                 delta_seconds = (beacon.timestamp - now).total_seconds()  + 2.398774 # ce n'est pas bon
                 if delta_seconds < 1:
                     circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
             if len(circles) >= 3:
-                position, _ = easy_least_squares(circles)
-                
+                position, _ = easy_least_squares(circles)      
                 return position
             else: 
                 return None 
 
     def provide_data(self):
         if self.params_setted and self.start_:
-            data = []
+            data = [] # ici on peut faire self.data et accumuler la trajectoire
 
             position = self.essaye_calcul_position_parmi_les_listes_B1_B6()
             if position != None:
                 data.append( {'x': position.center.x, 'y':position.center.y})
-                with open(self.filename, 'a') as f:
-                    f.write(f'x = {position.center.x}, y = {position.center.y},  error = {position.radius}, time1 = {self.b1.timestamp}, time2 = {self.b2.timestamp}, time3 = {self.b3.timestamp}\n')
+                with open(self.filename + '.txt', 'a') as f:
+                    f.write( (f'x = {position.center.x}, y = {position.center.y},'
+                            'error = {position.radius}, time1 = {self.b1.timestamp},'
+                            'time2 = {self.b2.timestamp}, time3 = {self.b3.timestamp}\n'))
                 return data
             else:
                 x= random.randint(100, 120)
                 y= random.randint(100, 120)
                 return [{'x':x, 'y':y}]
-        else: 
+        elif self.params_setted:
+            print("parametres sont settees, lance l'application")
+            x= random.randint(50, 62)
+            y= random.randint(50, 62)
+            return [{'x':x, 'y':y}]
+        else:
             print('not started yet')
             x= random.randint(50, 62)
             y= random.randint(50, 62)

@@ -10,9 +10,9 @@ all_beacons = [
         'mac':'FC:CF:C5:18:B0:E8'},
 
         {'name':5,
-        'mac':'mac-3'},
+        'mac':'AJOUTER ICI MAC ADRESSE'},
         {'name':6,
-        'mac':'mac-3'},
+        'mac':'AJOUTER ICI MAC ADRESSE2'},
     ]
 
 def format_timestamp( timestamp):     

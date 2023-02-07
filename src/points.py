@@ -21,4 +21,4 @@ class Point:
         self.y = y
         self.z = z
     def myprint(self):
-        print(self.name)
+        return (f'{self.name}')
