@@ -1,5 +1,20 @@
+
 import json
 from flask import jsonify
+from datetime import datetime
+from beacon import Beacon, all_beacons
+from points import get_used_points
+from easy_trilateration.model import *  
+from easy_trilateration.least_squares import easy_least_squares  
+from easy_trilateration.graph import *  
+import random
+
+
+def calculate_distance(rssi):
+    dist = float(10 **((-69 - int(rssi)) / 20))
+    return dist
+
+
 
 class Backend():
     def __init__(self):
@@ -8,78 +23,98 @@ class Backend():
         self.data_ble = []
         self.timestamps = []
         self.graph_data = []
-
-        self.B1_list = []
-        self.B2_list = []
-        self.B3_list = []
-
-        # TODO Définir interaction des paramètres d'étude avec le calcul de position
-        self.params_etude = {'B1': '', 'B2': 'p6'}
+        self.b1 = Beacon(all_beacons[0]['name'], all_beacons[0]['mac'])
+        self.b2 = Beacon(all_beacons[1]['name'], all_beacons[1]['mac'])
+        self.b3 = Beacon(all_beacons[2]['name'], all_beacons[2]['mac'])
+        self.b4 = Beacon(all_beacons[3]['name'], all_beacons[3]['mac'])
+        self.used_beacons = []
+        self.start_ = False
+        self.params_setted = False
 
     def set_args(self, parser):
         self.logging = parser.parse_args().log
 
-
-    def format_timestamp(self, timestamp):
-        ts = timestamp.split(" ")
-        ts = ts[-3].split(":")
-        ts_float = float(ts[0]) + float(ts[1])/60 + float(ts[2])/3600
-
-        return ts_float
+    def start_getting_data(self):
+        if self.start_ == False:
+            self.start_ = True
+            print('________________________START GETTING DATA_______________')
 
     def process_data(self, request):
+        
         timestamp = request.form["Timestamp"]
         receiverDevice = request.form["ReceiverDevice"]
         bleDevice = request.form["BLEDevice"]
         rssi = request.form["RSSI"]
 
-        ts_float = self.format_timestamp(timestamp)
-
-        self.classer_donnees() # B1 -> B1_list, B2 -> B2_list
-
-        self.data_ble.append({
-            "Timestamp": float(ts_float),
-            "ReceiverDevice": str(receiverDevice),
-            "BLEDevice": str(bleDevice),
-            "RSSI": float(rssi),
-        })
-        
+        if bleDevice == self.b1.mac:
+            self.b1.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
+        elif bleDevice == self.b2.mac:
+            self.b2.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
+        elif bleDevice == self.b3.mac:
+            self.b3.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
+        elif bleDevice == self.b4.mac:
+            self.b4.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
         self.save_to_disk()
-        
+        self.start_getting_data()
         return "received"
 
-    def classer_donnees(self, request):
-        pass
-
     def update_params_etude(self, request):
-        # new_params = request['qwrqr']
+        print('________params setted__________')
+
+        new_params = request['params']
+        points = get_used_points(new_params.values())
         
-        # self.params_etude = new_params
-        pass
+        for point in points:
+            if new_params["B1"] == point.name:
+                self.b1.set_beacon_on_point(point)
+                self.used_beacons.append(self.b1)
+            elif new_params["B2"] == point.name:
+                self.b2.set_beacon_on_point(point)
+                self.used_beacons.append(self.b2)
+            elif new_params["B3"] == point.name:
+                self.b3.set_beacon_on_point(point)
+                self.used_beacons.append(self.b3)
+            elif new_params["B4"] == point.name:
+                self.b4.set_beacon_on_point(point)
+                self.used_beacons.append(self.b4)
+        
+        self.filename = new_params["filename"]
+        self.params_setted = True
 
     def essaye_calcul_position_parmi_les_listes_B1_B6(self):
-        
-        #for elem in self.params_etude:
-        #    if elem['B1'] != '':
-
-        pass
+        now = datetime.now()
+        circles = []
+        if len(self.used_beacons) >= 3: 
+            for beacon in self.used_beacons:
+                delta_seconds = (beacon.timestamp - now).total_seconds()  + 2.398774 # ce n'est pas bon
+                if delta_seconds < 1:
+                    circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
+            if len(circles) >= 3:
+                position, _ = easy_least_squares(circles)
+                
+                return position
+            else: 
+                return None 
 
     def provide_data(self):
-        self.essaye_calcul_position_parmi_les_listes_B1_B6()
-        # Utilise seulement les données si assez récentes
+        if self.params_setted and self.start_:
+            data = []
 
-        #self.positions_calculees = []
-        #self.positions_calculees = [{'x': 12, 'y': 54}, {'x': 12, 'y': 54}, {'x': 12, 'y': 54}]
-
-        #return self.positions_calculees
-
-        data = []
-        for elem in self.data_ble:
-            if elem['BLEDevice'] == 'FC:CF:C5:18:B0:E8':
-                if len(data) == 0 or elem['Timestamp'] > data[-1]['x']:
-                    data.append({'x': elem["Timestamp"], 'y': elem["RSSI"]})
-
-        return jsonify(data)
+            position = self.essaye_calcul_position_parmi_les_listes_B1_B6()
+            if position != None:
+                data.append( {'x': position.center.x, 'y':position.center.y})
+                with open(self.filename, 'a') as f:
+                    f.write(f'x = {position.center.x}, y = {position.center.y},  error = {position.radius}, time1 = {self.b1.timestamp}, time2 = {self.b2.timestamp}, time3 = {self.b3.timestamp}\n')
+                return data
+            else:
+                x= random.randint(100, 120)
+                y= random.randint(100, 120)
+                return [{'x':x, 'y':y}]
+        else: 
+            print('not started yet')
+            x= random.randint(50, 62)
+            y= random.randint(50, 62)
+            return [{'x':x, 'y':y}]
 
     def save_to_disk(self):
         if (self.logging == True):
@@ -88,3 +123,4 @@ class Backend():
                     fp.write("%s\n" % packet)
             with open('./etudes/' + self.etude_name + '.json', 'w') as fp:
                 json.dump(self.data_ble, fp, indent=4)
+

@@ -4,9 +4,37 @@ function etude_start() {
     etude_running.style.display = "block";
 
     var etude_params = document.getElementById("etude-params");
+    var filename = document.getElementById("etude-name");
+    var b1 = document.getElementById("B1");
+    var b2 = document.getElementById("B2");
+    var b3 = document.getElementById("B3");
+    var b4 = document.getElementById("B4");
+    var b5 = document.getElementById("B5");
+    var b6 = document.getElementById("B6");
     etude_params.style.display = "none";
 
-    
+    // $.ajax({
+    //     type: 'POST',
+    //     // url: "http://127.0.0.1:5000/etude",
+    //     url: "http://localhost:5000/etude",
+    //     data: JSON.stringify({
+    //         "params": {
+    //             "filename": filename.value,
+    //             "B1": b1.value,
+    //             "B2": b2.value,
+    //             "B3": b3.value,
+    //             "B4": b4.value,
+    //             "B5": b5.value,
+    //             "B6": b6.value
+    //        }
+    //     })
+    //     ,
+    //     dataType: "json",
+    //     contentType:"application/json",
+    // }).done(function () {
+    //     // $('#modal-1').modal('hide');
+    //     // table.row.data([val_no, val_name, val_address, val_phone, val_car, val_penalty, UserIndex_CreateEditButton(val_no, val_name, val_address, val_phone, val_car, val_penalty), UserIndex_CreateDeleteButton(val_no)], $('#' + tempUpdate));
+    // });
 }
 
 function etude_stop() {

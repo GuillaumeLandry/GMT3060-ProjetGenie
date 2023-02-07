@@ -4,6 +4,7 @@
     <link rel="shortcut icon" href="#" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css" integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls" crossorigin="anonymous">    <script src="{{ url_for('static', filename='script.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
     <title>Serveur de localisation</title>
   </head>
   <body style="margin: 2%">
@@ -72,23 +73,29 @@
       <fieldset>
         <div id="etude-params">
           <label for="B1">B1</label>
-          <input type="checkbox" id="B1" name="B1" value="true">
-          <select id="B1-select"></select><br>
+          <!-- <input type="checkbox" id="B1" name="B1" value="true"> -->
+          <input type="text" id="B1" name="B1">
+          <!-- <select id="B1-select"></select><br> -->
           <label for="B2">B2</label>
-          <input type="checkbox" id="B2" name="B2" value="true">
-          <select id="B2-select"></select><br>
+          <input type="text" id="B2" name="B2">
+          <!-- <input type="checkbox" id="B2" name="B2" value="true"> -->
+          <!-- <select id="B2-select"></select><br> -->
           <label for="B3">B3</label>
-          <input type="checkbox" id="B3" name="B3" value="true">
-          <select id="B3-select"></select><br>
+          <input type="text" id="B3" name="B3">
+          <!-- <input type="checkbox" id="B3" name="B3" value="true"> -->
+          <!-- <select id="B3-select"></select><br> -->
           <label for="B4">B4</label>
-          <input type="checkbox" id="B4" name="B4" value="true">
-          <select id="B4-select"></select><br>
+          <input type="text" id="B4" name="B5" >
+          <!-- <input type="checkbox" id="B4" name="B4" value="true"> -->
+          <!-- <select id="B4-select"></select><br> -->
           <label for="B5">B5</label>
-          <input type="checkbox" id="B5" name="B5" value="true">
-          <select id="B5-select"></select><br>
+          <input type="text" id="B5" name="B5" >
+          <!-- <input type="checkbox" id="B5" name="B5" value="true"> -->
+          <!-- <select id="B5-select"></select><br> -->
           <label for="B6">B6</label>
-          <input type="checkbox" id="B6" name="B6" value="true">
-          <select id="B6-select"></select><br>
+          <input type="text" id="B6" name="B6" >
+          <!-- <input type="checkbox" id="B6" name="B6" value="true"> -->
+          <!-- <select id="B6-select"></select><br> -->
 
           <br>
           <input type="text" id="etude-name" name="etude-name" placeholder="Nom de l'étude à enregistrer"><br><br>

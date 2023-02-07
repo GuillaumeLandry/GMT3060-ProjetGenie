@@ -14,8 +14,9 @@ def process():
     return backend.process_data(request)
 
 @app.route("/etude", methods=["POST"])
-def provide():
-    return backend.update_params_etude()
+def update_params_etude():
+    backend.update_params_etude(request.json)
+    return "ok"
 
 @app.route("/provide", methods=["GET"])
 def provide():
