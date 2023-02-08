@@ -27,6 +27,7 @@ public class Webview extends Fragment {
         myWebView.loadUrl(MainActivity.getURL());
         WebSettings webSettings = myWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
+        webSettings.setUserAgentString("AndroidReceiver");
 
         // Inflate the layout for this fragment
         return myView;

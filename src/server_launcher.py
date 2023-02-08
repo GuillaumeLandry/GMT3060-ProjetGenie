@@ -1,8 +1,10 @@
 import argparse
 import server_backend as server_backend
 from flask import Flask, request, render_template
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
+CORS(app)
 backend = server_backend.Backend()
 
 @app.route("/")
@@ -14,9 +16,9 @@ def process():
     return backend.process_data(request)
 
 @app.route("/etude", methods=["POST"])
+@cross_origin()
 def update_params_etude():
-    backend.update_params_etude(request.json)
-    return "ok"
+    return backend.update_params_etude(request.json)
 
 @app.route("/provide", methods=["GET"])
 def provide():

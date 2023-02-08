@@ -1,6 +1,5 @@
 
 import json
-from flask import jsonify
 from datetime import datetime
 from beacon import Beacon, all_beacons
 from points import get_used_points
@@ -8,13 +7,6 @@ from easy_trilateration.model import *
 from easy_trilateration.least_squares import easy_least_squares  
 from easy_trilateration.graph import *  
 import random
-
-
-def calculate_distance(rssi):
-    dist = float(10 **((-69 - int(rssi)) / 20))
-    return dist
-
-
 
 class Backend():
     def __init__(self):
@@ -49,17 +41,17 @@ class Backend():
         rssi = request.form["RSSI"]
         # on peut creer une classe générale pour beacons et écrire ça dans une-deux lignes, au besoin
         if bleDevice == self.b1.mac:
-            self.b1.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
+            self.b1.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b2.mac:
-            self.b2.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
+            self.b2.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b3.mac:
-            self.b3.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
+            self.b3.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b4.mac:
-            self.b4.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
+            self.b4.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b5.mac:
-            self.b5.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
+            self.b5.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b6.mac:
-            self.b6.set_telemetry(timestamp, receiverDevice, calculate_distance(rssi))
+            self.b6.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         self.save_to_disk()
         self.start_getting_data()
         return "received"
@@ -95,6 +87,11 @@ class Backend():
         
         self.filename = new_params["filename"]
         self.params_setted = True
+
+        return "ok"
+
+    def calculate_distance_from_rssi(self, rssi):
+        return float(10 **((-69 - int(rssi)) / 20))
 
     def essaye_calcul_position_parmi_les_listes_B1_B6(self):
         now = datetime.now()
