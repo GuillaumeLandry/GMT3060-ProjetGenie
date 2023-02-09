@@ -30,9 +30,7 @@ function etude_start() {
         ,
         dataType: "json",
         contentType:"application/json",
-    }).done(function () {
-        
-    });
+    }).done(function () { });
 }
 
 function etude_stop() {
@@ -41,5 +39,18 @@ function etude_stop() {
 
     var etude_params = document.getElementById("etude-params");
     etude_params.style.display = "block";
+
+    $.ajax({
+        type: 'POST',
+        url: "http://localhost:5000/etude",
+        data: JSON.stringify({
+            "params": {
+                "filename": ""
+           }
+        })
+        ,
+        dataType: "json",
+        contentType:"application/json",
+    }).done(function () { });
 }
 

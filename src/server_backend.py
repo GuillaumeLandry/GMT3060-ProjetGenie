@@ -10,11 +10,6 @@ import random
 
 class Backend():
     def __init__(self):
-        self.logging = False
-        self.etude_name = "etude_1"
-        self.data_ble = []
-        self.timestamps = []
-        self.graph_data = []
         self.b1 = Beacon(all_beacons[0]['name'], all_beacons[0]['mac'])
         self.b2 = Beacon(all_beacons[1]['name'], all_beacons[1]['mac'])
         self.b3 = Beacon(all_beacons[2]['name'], all_beacons[2]['mac'])
@@ -39,6 +34,7 @@ class Backend():
         receiverDevice = request.form["ReceiverDevice"]
         bleDevice = request.form["BLEDevice"]
         rssi = request.form["RSSI"]
+        
         # on peut creer une classe générale pour beacons et écrire ça dans une-deux lignes, au besoin
         if bleDevice == self.b1.mac:
             self.b1.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
@@ -52,43 +48,54 @@ class Backend():
             self.b5.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b6.mac:
             self.b6.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
-        self.save_to_disk()
+        
         self.start_getting_data()
         return "received"
 
     def update_params_etude(self, request):
 
         new_params = request['params']
-        print('________params setted________________', new_params)
-        points = get_used_points(new_params.values())
-        
-        for point in points:
-            if new_params["B1"] == point.name:
-                self.b1.set_beacon_on_point(point)
-                self.used_beacons.append(self.b1)
-            elif new_params["B2"] == point.name:
-                self.b2.set_beacon_on_point(point)
-                self.used_beacons.append(self.b2)
-            elif new_params["B3"] == point.name:
-                self.b3.set_beacon_on_point(point)
-                self.used_beacons.append(self.b3)
-            elif new_params["B4"] == point.name:
-                self.b4.set_beacon_on_point(point)
-                self.used_beacons.append(self.b4)
-            elif new_params["B5"] == point.name:
-                self.b5.set_beacon_on_point(point)
-                self.used_beacons.append(self.b5)
-            elif new_params["B6"] == point.name:
-                self.b6.set_beacon_on_point(point)
-                self.used_beacons.append(self.b6)
-            else:
-                pass
-            # throw error pas de pointe associée... qqch comme ça
-        
-        self.filename = new_params["filename"]
-        self.params_setted = True
 
-        return "ok"
+        if new_params["filename"] == "":
+            print('________étude arrêtée________________')
+            
+            self.filename = new_params["filename"]
+            self.params_setted = False
+            
+            return "ok"
+
+        else:
+
+            print('________params setted________________', new_params)
+            points = get_used_points(new_params.values())
+            
+            for point in points:
+                if new_params["B1"] == point.name:
+                    self.b1.set_beacon_on_point(point)
+                    self.used_beacons.append(self.b1)
+                elif new_params["B2"] == point.name:
+                    self.b2.set_beacon_on_point(point)
+                    self.used_beacons.append(self.b2)
+                elif new_params["B3"] == point.name:
+                    self.b3.set_beacon_on_point(point)
+                    self.used_beacons.append(self.b3)
+                elif new_params["B4"] == point.name:
+                    self.b4.set_beacon_on_point(point)
+                    self.used_beacons.append(self.b4)
+                elif new_params["B5"] == point.name:
+                    self.b5.set_beacon_on_point(point)
+                    self.used_beacons.append(self.b5)
+                elif new_params["B6"] == point.name:
+                    self.b6.set_beacon_on_point(point)
+                    self.used_beacons.append(self.b6)
+                else:
+                    pass
+                # throw error pas de pointe associée... qqch comme ça
+            
+            self.filename = new_params["filename"]
+            self.params_setted = True
+
+            return "ok"
 
     def calculate_distance_from_rssi(self, rssi):
         return float(10 **((-69 - int(rssi)) / 20))
@@ -115,10 +122,10 @@ class Backend():
             position = self.essaye_calcul_position_parmi_les_listes_B1_B6()
             if position != None:
                 data.append( {'x': position.center.x, 'y':position.center.y})
-                with open(self.filename + '.txt', 'a') as f:
-                    f.write( (f'x = {position.center.x}, y = {position.center.y},'
-                            'error = {position.radius}, time1 = {self.b1.timestamp},'
-                            'time2 = {self.b2.timestamp}, time3 = {self.b3.timestamp}\n'))
+                with open('./etudes/' + self.filename + '.txt', 'a') as f:
+                    f.write((f'x = {position.center.x}, y = {position.center.y},'
+                             f'error = {position.radius}, time1 = {self.b1.timestamp},'
+                             f'time2 = {self.b2.timestamp}, time3 = {self.b3.timestamp}\n'))
                 return data
             else:
                 x= random.randint(100, 120)
@@ -134,12 +141,3 @@ class Backend():
             x= random.randint(50, 62)
             y= random.randint(50, 62)
             return [{'x':x, 'y':y}]
-
-    def save_to_disk(self):
-        if (self.logging == True):
-            with open('./etudes/' + self.etude_name + '.txt', 'w') as fp:
-                for packet in self.data_ble:
-                    fp.write("%s\n" % packet)
-            with open('./etudes/' + self.etude_name + '.json', 'w') as fp:
-                json.dump(self.data_ble, fp, indent=4)
-

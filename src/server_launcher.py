@@ -25,8 +25,4 @@ def provide():
     return backend.provide_data()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--log', action='store_true')
-    backend.set_args(parser)
-
     app.run(host='0.0.0.0')

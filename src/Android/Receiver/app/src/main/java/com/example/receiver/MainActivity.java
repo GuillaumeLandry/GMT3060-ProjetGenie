@@ -32,7 +32,7 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static String urlServer = "http://10.248.28.89:5000";
+    private static String urlServer = "http://192.168.0.100:5000";
     private static OkHttpClient okHttpClient;
     private static Request request;
     private static BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -97,30 +97,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             BluetoothDevice device = result.getDevice();
-            ScanRecord scanRecord = result.getScanRecord();
-            byte[] advertisementData = scanRecord.getBytes();
-            //Log.i("DONNEES", "advertisement data: " + bytesToHex(advertisementData));
-
-            String msg = "payload = ";
-            for (byte b : scanRecord.getBytes())
-                msg += String.format("%02x ", b);
-
-            // GUILLAUME ESTIMOTES SONT :
-            String roseG = "";
-            String mauveG = "FC:CF:C5:18:B0:E8";
-            String jauneG = "FF:FF:FF:FF:FF:FF";
-
-            // ALEXANDRE ESTIMOTES SONT :
-            // Rose :
-            // Mauve :
-            // Jaune :
-            try {
-                //if (device.toString().equals(mauveG) || device.toString().equals(jauneG)) {
-                    Log.d("DONNEES", "Device: " + result.getDevice().toString() + ", Name : " + result.getScanRecord().getDeviceName() + ", RSSI : " + String.valueOf(result.getRssi()));
-                //}
-            } catch (Exception e) {
-                Log.d("DONNEES", e.toString());
-            }
 
             // SEND DATA TO SERVER
             RequestBody formbody
@@ -137,28 +113,30 @@ public class MainActivity extends AppCompatActivity {
             okHttpClient.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(
-                        @NotNull Call call,
-                        @NotNull IOException e) {
-                            /*
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(getApplicationContext(), "server down", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                             */
+                    @NotNull Call call,
+                    @NotNull IOException e) {
+                        /*
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(), "server down", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                        */
                 }
 
                 @Override
                 public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                            /*if (response.body().string().equals("received")) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(getApplicationContext(), "data received", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                            }*/
+                    /*
+                    if (response.body().string().equals("received")) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(), "data received", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                    */
                 }
             });
         }

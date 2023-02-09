@@ -7,12 +7,11 @@ all_beacons = [
         {'name':3,
         'mac':'CC:B9:16:CD:6F:2F'},
         {'name':4,
-        'mac':'FC:CF:C5:18:B0:E8'},
-
-        {'name':5,
-        'mac':'AJOUTER ICI MAC ADRESSE'},
+        'mac':'F6:C1:78:1C:4F:2D'}, # Guillaume - Jaune
+        {'name':5, 
+        'mac':'EB:76:88:9B:81:63'}, # Guillaume - Rose
         {'name':6,
-        'mac':'AJOUTER ICI MAC ADRESSE2'},
+        'mac':'FA:CD:C3:16:AE:E6'}, # Guillaume - Mauve
     ]
 
 def format_timestamp( timestamp):     
