@@ -1,9 +1,6 @@
 
 function etude_start() {
-    var etude_running = document.getElementById("etude-running");
-    etude_running.style.display = "block";
 
-    var etude_params = document.getElementById("etude-params");
     var filename = document.getElementById("etude-name");
     var b1 = document.getElementById("B1");
     var b2 = document.getElementById("B2");
@@ -11,7 +8,6 @@ function etude_start() {
     var b4 = document.getElementById("B4");
     var b5 = document.getElementById("B5");
     var b6 = document.getElementById("B6");
-    etude_params.style.display = "none";
 
     $.ajax({
         type: 'POST',
@@ -30,16 +26,17 @@ function etude_start() {
         ,
         dataType: "json",
         contentType:"application/json",
-    }).done(function () { });
+        complete: function () {
+            var etude_running = document.getElementById("etude-running");
+            etude_running.style.display = "block";
+    
+            var etude_params = document.getElementById("etude-params");
+            etude_params.style.display = "none";
+        }
+    });
 }
 
 function etude_stop() {
-    var etude_running = document.getElementById("etude-running");
-    etude_running.style.display = "none";
-
-    var etude_params = document.getElementById("etude-params");
-    etude_params.style.display = "block";
-
     $.ajax({
         type: 'POST',
         url: "http://localhost:5000/etude",
@@ -51,6 +48,13 @@ function etude_stop() {
         ,
         dataType: "json",
         contentType:"application/json",
-    }).done(function () { });
+        complete: function () {
+            var etude_running = document.getElementById("etude-running");
+            etude_running.style.display = "none";
+        
+            var etude_params = document.getElementById("etude-params");
+            etude_params.style.display = "block";
+        }
+    });
 }
 
