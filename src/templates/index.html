@@ -84,7 +84,7 @@
             fill: false,
             showLine: true,
             tension: 0,
-          },/*{
+          },{
             label: 'Fond de carte',
             data: [],
             backgroundColor: [
@@ -97,11 +97,22 @@
             fill: false,
             showLine: true,
             tension: 0,
-          }*/]
+          }]
         },
         options: {animation: {duration: .5}, responsive: true}
       });
+
+      // Charge le fond de carte une fois à la création du graphique
+      fetch('/map')
+        .then(response => response.json())
+        .then(data => {
+          console.log(data);
+          //chart.data.labels = data.labels;
+          chart.data.datasets[1].data = data;
+          chart.update();
+        });
       
+      // Demande les données périodiquement au backend pour mettre à jour la carte
       setInterval(function() {
         fetch('/provide')
           .then(response => response.json())
