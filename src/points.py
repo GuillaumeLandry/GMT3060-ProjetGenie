@@ -1,6 +1,6 @@
 def getAllPoints():
     points = []
-    with open('CARTO-LAB.txt', 'r') as file:
+    with open('carte_original.txt', 'r') as file:
         lines = file.readlines()
         for line in lines:
             name, x, y, z = line.split(',')

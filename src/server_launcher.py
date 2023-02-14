@@ -3,15 +3,16 @@ import server_backend as server_backend
 from flask import Flask, request, render_template
 from flask_cors import CORS, cross_origin
 import logging
+import requests
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
 CORS(app)
 backend = server_backend.Backend()
 
 @app.route("/")
 def render():
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
     return render_template('index.html', data_ble=2)
 
 @app.route("/ble", methods=["POST"])
@@ -27,9 +28,13 @@ def etude():
 def provide():
     return backend.provide_data()
 
-@app.route("/map", methods=["GET"])
-def map():
-    return backend.provide_map()
+@app.route("/map-lab", methods=["GET"])
+def map_lab():
+    return backend.provide_map_lab()
+
+@app.route("/map-danger", methods=["GET"])
+def map_danger():
+    return backend.provide_map_danger()
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')

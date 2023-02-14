@@ -1,4 +1,3 @@
-
 function etude_start() {
 
     var filename = document.getElementById("etude-name");

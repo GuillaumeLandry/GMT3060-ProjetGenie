@@ -24,7 +24,7 @@ class Beacon:
     def __init__(self, name, mac):
         self.name = name
         self.mac = mac
-        self.timestamp = datetime(year=2020, month=12, day=21, hour=12, minute=22, second=00)
+        self.timestamp = 0
         self.distance = 0
         
     def set_beacon_on_point(self, point):
@@ -36,7 +36,7 @@ class Beacon:
 
     def set_telemetry(self, timestamp, receiverDevice, distance):
         self.timestamp = format_timestamp(timestamp)
-        self.reciverDevice = receiverDevice
+        self.receiverDevice = receiverDevice
         self.distance = distance
 
 

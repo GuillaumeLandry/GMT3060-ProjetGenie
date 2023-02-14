@@ -75,10 +75,10 @@
             label: 'Positions',
             data: [],
             backgroundColor: [
-              'rgba(255, 99, 132, 0.2)',
+              'rgba(99, 255, 132, 0.2)',
             ],
             borderColor: [
-              'rgba(255, 99, 132, 1)',
+              'rgba(99, 255, 132, 1)',
             ],
             borderWidth: 1,
             fill: false,
@@ -97,18 +97,56 @@
             fill: false,
             showLine: true,
             tension: 0,
+          },{
+            label: 'Zone de danger',
+            data: [],
+            backgroundColor: [
+              'rgba(255, 0, 0, 0.2)',
+            ],
+            borderColor: [
+              'rgba(255, 0, 0, 1)',
+            ],
+            borderWidth: 1,
+            fill: false,
+            showLine: true,
+            tension: 0,
           }]
         },
-        options: {animation: {duration: .5}, responsive: true}
+        options: {
+          animation: {duration: .5},
+          responsive: true, 
+          scales: {
+            xAxes: [{
+              ticks: {
+                stepSize: 1,
+                suggestedMin: 80,
+                suggestedMax: 145
+              }
+            }],
+            yAxes: [{
+              ticks: {
+                stepSize: 1,
+                suggestedMin: 80,
+                suggestedMax: 145
+              }
+            }]
+          }
+        }
       });
 
       // Charge le fond de carte une fois à la création du graphique
-      fetch('/map')
+      fetch('/map-lab')
         .then(response => response.json())
         .then(data => {
-          console.log(data);
-          //chart.data.labels = data.labels;
           chart.data.datasets[1].data = data;
+          chart.update();
+        });
+
+      // Charge la zone de danger une fois à la création du graphique
+      fetch('/map-danger')
+        .then(response => response.json())
+        .then(data => {
+          chart.data.datasets[2].data = data;
           chart.update();
         });
       
@@ -117,9 +155,10 @@
         fetch('/provide')
           .then(response => response.json())
           .then(data => {
-            console.log(data);
-            chart.data.labels = data.labels;
-            chart.data.datasets[0].data = data;
+            if (data != []) {
+              chart.data.labels = data.labels;
+              chart.data.datasets[0].data = data;
+            }
             chart.update();
           });
       }, 1000);

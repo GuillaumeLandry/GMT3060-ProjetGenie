@@ -19,10 +19,9 @@ class Backend():
         self.received_beacons = []
         self.start_ = False
         self.params_setted = False
-
-    def set_args(self, parser):
-        self.logging = parser.parse_args().log
-
+        self.position_data = []
+        self.POSITION_HISTORY_SIZE = 3
+    
     def start_getting_data(self):
         if self.start_ == False and self.params_setted == True:
             self.start_ = True
@@ -39,27 +38,22 @@ class Backend():
         if bleDevice == self.b1.mac:
             print("Received 1")
             self.b1.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
-
         elif bleDevice == self.b2.mac:
             print("Received 2")
             self.b2.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
-
         elif bleDevice == self.b3.mac:
             print("Received 3")
             self.b3.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
-
         elif bleDevice == self.b4.mac:
             print("Received 4")
             self.b4.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
-
         elif bleDevice == self.b5.mac:
             print("Received 5")
             self.b5.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
-
         elif bleDevice == self.b6.mac:
             print("Received 6")
             self.b6.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
-
+        
         self.start_getting_data()
         return "received"
 
@@ -117,50 +111,49 @@ class Backend():
 
         if len(self.used_beacons) >= 3: # minimum qu'on a besoin 
             for beacon in self.used_beacons:
-                if beacon.mac == 'EB:76:88:9B:81:63':
-                    print(beacon.timestamp)
-                delta_seconds = abs((beacon.timestamp - now).total_seconds()  + 2.398774) # ce n'est pas bon
-                if delta_seconds < 1:
-                    circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
+                if beacon.timestamp != 0:
+                    delta_seconds = abs((beacon.timestamp - now).total_seconds() + 2.398774) # ce n'est pas bon
+                    if delta_seconds < 1:
+                        circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
+            
             if len(circles) >= 3:
                 position, _ = easy_least_squares(circles)      
                 return position
             else: 
-                return None 
+                return None
 
     def provide_data(self):
         if self.params_setted and self.start_:
-            data = [] # ici on peut faire self.data et accumuler la trajectoire
             position = self.essaye_calcul_position_parmi_les_listes_B1_B6()
+            now = datetime.now()
             if position != None:
-                data.append( {'x': position.center.x, 'y':position.center.y})
+                self.position_data.append({'x':position.center.x, 'y':position.center.y})
                 with open('./etudes/' + self.filename + '.txt', 'a') as f:
-                    f.write((f'x = {position.center.x}, y = {position.center.y},'
-                             f'error = {position.radius}, time1 = {self.b1.timestamp},'
-                             f'time2 = {self.b2.timestamp}, time3 = {self.b3.timestamp},'
-                             f'time4 = {self.b4.timestamp}, time5 = {self.b5.timestamp},'
-                             f'time6 = {self.b6.timestamp}\n'))
-                return data
-            else:
-                print("No position")
-                x= random.randint(200, 250)
-                y= random.randint(200, 250)
-                return [{'x':x, 'y':y}]
-        elif self.params_setted:
-            print("parametres sont settees, lance l'application")
-            x= random.randint(10, 22)
-            y= random.randint(10, 22)
-            return [{'x':x, 'y':y}]
-        else:
-            print('not started yet')
-            x= random.randint(50, 62)
-            y= random.randint(50, 62)
-            return [{'x':x, 'y':y}]
+                    f.write((f'timestamp={now},x={position.center.x},y={position.center.y},error={position.radius},'
+                             f'dist1={self.b1.distance},time1={self.b1.timestamp},'
+                             f'dist2={self.b2.distance},time2={self.b2.timestamp},'
+                             f'dist3={self.b3.distance},time3={self.b3.timestamp},'
+                             f'dist4={self.b4.distance},time4={self.b4.timestamp},'
+                             f'dist5={self.b5.distance},time5={self.b5.timestamp},'
+                             f'dist6={self.b6.distance},time6={self.b6.timestamp},\n'))
+        
+        while len(self.position_data) > self.POSITION_HISTORY_SIZE:
+            self.position_data.pop(0)
 
-    def provide_map(self):
-        data = [] # ici on peut faire self.data et accumuler la trajectoire
+        return self.position_data
 
-        with open("CARTO-LAB.txt", "r") as f:
+    def provide_map_lab(self):
+        data = []
+        with open("carte_lab.txt", "r") as f:
+            for num in f.readlines():
+                num = num.split(",")
+                x, y, z = [num[1], num[2], num[3]]
+                data.append({'x': x, 'y':y})
+        return data
+
+    def provide_map_danger(self):
+        data = []
+        with open("carte_danger.txt", "r") as f:
             for num in f.readlines():
                 num = num.split(",")
                 x, y, z = [num[1], num[2], num[3]]
