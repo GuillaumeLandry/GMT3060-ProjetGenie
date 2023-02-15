@@ -10,26 +10,26 @@ from shapely.geometry.polygon import Polygon
 
 class Backend():
     def __init__(self):
+        # Beacons disponibles
         self.b1 = Beacon(all_beacons[0]['name'], all_beacons[0]['mac'])
         self.b2 = Beacon(all_beacons[1]['name'], all_beacons[1]['mac'])
         self.b3 = Beacon(all_beacons[2]['name'], all_beacons[2]['mac'])
         self.b4 = Beacon(all_beacons[3]['name'], all_beacons[3]['mac'])
         self.b5 = Beacon(all_beacons[4]['name'], all_beacons[4]['mac'])
         self.b6 = Beacon(all_beacons[5]['name'], all_beacons[5]['mac'])
+        
+        # Listes et autres structures
         self.used_beacons = []
-        self.received_beacons = []
+        self.data_positions = []
         self.used_for_calculation_beacons = []
-        self.start_ = False
-        self.params_setted = False
-        self.position_data = []
         self.danger_zone = Polygon()
-        self.POSITION_HISTORY_SIZE = 20
+
+        # Flags
+        self.etude_running = False
         self.alert_flag = False
-    
-    def start_getting_data(self):
-        if self.start_ == False and self.params_setted == True:
-            self.start_ = True
-            print('________________________START GETTING DATA_______________')
+
+        # Constantes globales
+        self.POSITION_HISTORY_SIZE = 20
 
     def process_data(self, request):
         
@@ -70,7 +70,6 @@ class Backend():
                 f.write(f'{rssi}\n')
             self.b6.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         
-        self.start_getting_data()
         return "received"
 
     def update_params_etude(self, request):
@@ -80,11 +79,11 @@ class Backend():
         if new_params["filename"] == "":
             print('\nÉtude arrêtée.\n')
             self.filename = new_params["filename"]
-            self.params_setted = False
+            self.etude_running = False
             return "ok"
 
         else:
-            print('\nParamètres mis à jour.\n', new_params)
+            print(f'\nParamètres mis à jour : {new_params}\nEnregistrement de l\'étude en cours ...\n')
             points = get_used_points(new_params.values())
             
             for point in points:
@@ -111,7 +110,7 @@ class Backend():
                 # throw error pas de pointe associée... qqch comme ça
             
             self.filename = new_params["filename"]
-            self.params_setted = True
+            self.etude_running = True
 
             return "ok"
 
@@ -154,7 +153,7 @@ class Backend():
                 return None
 
     def provide_data(self):
-        if self.params_setted and self.start_:
+        if self.etude_running:
             position = self.essaye_calcul_position_parmi_les_listes_B1_B6()
             now = datetime.now()
             if position != None:
@@ -163,17 +162,17 @@ class Backend():
                 if self.danger_zone.contains(Point(position.center.x,position.center.y)):
                     self.alert_flag = True
                 
-                self.position_data.append({'x':position.center.x, 'y':position.center.y})
+                self.data_positions.append({'x':position.center.x, 'y':position.center.y})
                 with open('./etudes/' + self.filename + '.txt', 'a') as f:
                     f.write(f'timestamp={now},x={position.center.x},y={position.center.y},error={position.radius},')
                     for beacon in self.used_for_calculation_beacons:
                         f.write(f'dist{beacon.name}={beacon.distance},time{beacon.name}={beacon.timestamp},')
                     f.write('\n')
 
-        while len(self.position_data) > self.POSITION_HISTORY_SIZE:
-            self.position_data.pop(0)
+        while len(self.data_positions) > self.POSITION_HISTORY_SIZE:
+            self.data_positions.pop(0)
 
-        return self.position_data
+        return self.data_positions
 
     def provide_map_lab(self):
         data = []
