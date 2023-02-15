@@ -67,9 +67,9 @@ class DataPlotter:
         self.errors = []
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Utiliser le script: python data_plotter.py --etude <nom_fichier_sans_extension> --beacon <nom_beacon')
-    parser.add_argument('--etude', type=str, help='Nom du fichier d\'étude à lire')
-    parser.add_argument('--beacon', type=str, help='Nom (numéro) du beacon pour lequel afficher les données')
+    parser = argparse.ArgumentParser(description='Comment utiliser le script: python data_plotter.py -e <nom_fichier_sans_extension> -b <nom_beacon')
+    parser.add_argument('-e', '--etude', type=str, help='Nom du fichier d\'étude à lire (sans son extension .json)')
+    parser.add_argument('-b', '--beacon', type=str, help='Nom (numéro) de la balise pour laquelle afficher les données')
 
     args = parser.parse_args()
 
