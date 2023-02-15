@@ -97,48 +97,65 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             BluetoothDevice device = result.getDevice();
+            String bleDevice = device.getAddress();
 
-            // SEND DATA TO SERVER
-            RequestBody formbody
-                    = new FormBody.Builder()
-                    .add("Timestamp", Calendar.getInstance().getTime().toString())
-                    .add("ReceiverDevice", Build.MODEL + " (" + Build.ID + ")")
-                    .add("BLEDevice", device.getAddress())
-                    .add("RSSI", String.valueOf(result.getRssi()))
-                    .build();
-            Request request = new Request.Builder().url(getURL() + "/ble")
-                    .post(formbody)
-                    .build();
+            String b1 = "CA:F4:06:34:9C:31";
+            String b2 = "D9:27:C2:C1:22:38";
+            String b3 = "CC:B9:16:CD:6F:2F";
+            String b4 = "F6:C1:78:1C:4F:2D";
+            String b5 = "EB:76:88:9B:81:63";
+            String b6 = "FD:D0:C6:19:B1:E9";
 
-            okHttpClient.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(
-                    @NotNull Call call,
-                    @NotNull IOException e) {
-                        /*
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getApplicationContext(), "server down", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                        */
-                }
+            if (
+                bleDevice == b1 ||
+                bleDevice == b2 ||
+                bleDevice == b3 ||
+                bleDevice == b4 ||
+                bleDevice == b5 ||
+                bleDevice == b6) 
+            {
+                // SEND DATA TO SERVER
+                RequestBody formbody
+                        = new FormBody.Builder()
+                        .add("Timestamp", Calendar.getInstance().getTime().toString())
+                        .add("ReceiverDevice", Build.MODEL + " (" + Build.ID + ")")
+                        .add("BLEDevice", bleDevice)
+                        .add("RSSI", String.valueOf(result.getRssi()))
+                        .build();
+                Request request = new Request.Builder().url(getURL() + "/ble")
+                        .post(formbody)
+                        .build();
 
-                @Override
-                public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                    /*
-                    if (response.body().string().equals("received")) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getApplicationContext(), "data received", Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                okHttpClient.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(
+                        @NotNull Call call,
+                        @NotNull IOException e) {
+                            /*
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(), "server down", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                            */
                     }
-                    */
-                }
-            });
+
+                    @Override
+                    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                        /*
+                        if (response.body().string().equals("received")) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(), "data received", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                        */
+                    }
+                });
+            }
         }
     };
 

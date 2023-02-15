@@ -1,9 +1,7 @@
-import argparse
 import server_backend as server_backend
 from flask import Flask, request, render_template
 from flask_cors import CORS, cross_origin
 import logging
-import requests
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)

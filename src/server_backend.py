@@ -5,7 +5,8 @@ from points import get_used_points
 from easy_trilateration.model import *  
 from easy_trilateration.least_squares import easy_least_squares  
 from easy_trilateration.graph import *  
-import random
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 
 class Backend():
     def __init__(self):
@@ -17,10 +18,12 @@ class Backend():
         self.b6 = Beacon(all_beacons[5]['name'], all_beacons[5]['mac'])
         self.used_beacons = []
         self.received_beacons = []
+        self.used_for_calculation_beacons = []
         self.start_ = False
         self.params_setted = False
         self.position_data = []
-        self.POSITION_HISTORY_SIZE = 3
+        self.danger_zone = []
+        self.POSITION_HISTORY_SIZE = 20
     
     def start_getting_data(self):
         if self.start_ == False and self.params_setted == True:
@@ -33,25 +36,37 @@ class Backend():
         receiverDevice = request.form["ReceiverDevice"]
         bleDevice = request.form["BLEDevice"]
         rssi = request.form["RSSI"]
-        
+
         # on peut creer une classe générale pour beacons et écrire ça dans une-deux lignes, au besoin
         if bleDevice == self.b1.mac:
-            print("Received 1")
+            print("Received 1 :", rssi) # Distance 3.70m
+            with open('./etudes/RSSI_values/' + 'b1' + '.txt', 'a') as f:
+                f.write(f'{rssi}\n')
             self.b1.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b2.mac:
-            print("Received 2")
+            print("Received 2 :", rssi) # Distance 6.10m
+            with open('./etudes/RSSI_values/' + 'b2' + '.txt', 'a') as f:
+                f.write(f'{rssi}\n')
             self.b2.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b3.mac:
-            print("Received 3")
+            print("Received 3 :", rssi) # Distance 5.00m
+            with open('./etudes/RSSI_values/' + 'b3' + '.txt', 'a') as f:
+                f.write(f'{rssi}\n')
             self.b3.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b4.mac:
-            print("Received 4")
+            print("Received 4 :", rssi) # Distance 4.50m
+            with open('./etudes/RSSI_values/' + 'b4' + '.txt', 'a') as f:
+                f.write(f'{rssi}\n')
             self.b4.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b5.mac:
-            print("Received 5")
+            print("Received 5 :", rssi) # Distance 6.40m
+            with open('./etudes/RSSI_values/' + 'b5' + '.txt', 'a') as f:
+                f.write(f'{rssi}\n')
             self.b5.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b6.mac:
-            print("Received 6")
+            print("Received 6 :", rssi) # Distance 3.50m
+            with open('./etudes/RSSI_values/' + 'b6' + '.txt', 'a') as f:
+                f.write(f'{rssi}\n')
             self.b6.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
         
         self.start_getting_data()
@@ -103,11 +118,26 @@ class Backend():
             return "ok"
 
     def calculate_distance_from_rssi(self, rssi):
-        return float(10 **((-69 - int(rssi)) / 20))
+        # Version 2
+        # friis_transmission_constant = 41.2
+        # tx_power = 10
+        # path_loss_exponent = 2 # =2 dans un environnement libre. Probablement plus haut en intérieur
+        # return 10**((tx_power - int(rssi) - friis_transmission_constant) / (10 * path_loss_exponent))
+        
+        # Version 3
+        # tx_power = 10
+        # return float(10**((tx_power-int(rssi))/40))
+
+        # Version 1 (https://iotandelectronics.wordpress.com/2016/10/07/how-to-calculate-distance-from-the-rssi-value-of-the-ble-beacon/)
+        # https://community.estimote.com/hc/en-us/articles/201636913-What-are-Broadcasting-Power-RSSI-and-other-characteristics-of-a-beacon-s-signal-        
+        measured_power = -37 # Default -69 | (Voir fichier Excel pour explication de cette valeur)
+        path_loss_exponent = 4 # =2 dans un environnement libre. Probablement plus haut en intérieur entre [2,4]
+        return float(10**((measured_power - int(rssi)) / (10 * path_loss_exponent)))
 
     def essaye_calcul_position_parmi_les_listes_B1_B6(self):
         now = datetime.now()
         circles = []
+        self.used_for_calculation_beacons = []
 
         if len(self.used_beacons) >= 3: # minimum qu'on a besoin 
             for beacon in self.used_beacons:
@@ -115,9 +145,13 @@ class Backend():
                     delta_seconds = abs((beacon.timestamp - now).total_seconds() + 2.398774) # ce n'est pas bon
                     if delta_seconds < 1:
                         circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
-            
+                        self.used_for_calculation_beacons.append(beacon)
+                    else:
+                        beacon.timestamp = 0
+                        beacon.distance = 0
+
             if len(circles) >= 3:
-                position, _ = easy_least_squares(circles)      
+                position, _ = easy_least_squares(circles)
                 return position
             else: 
                 return None
@@ -127,16 +161,17 @@ class Backend():
             position = self.essaye_calcul_position_parmi_les_listes_B1_B6()
             now = datetime.now()
             if position != None:
+
+                ## Process danger zone alert
+                # if self.danger_zone.contains(Point(position.center.x,position.center.y)):
+                #     print("ATTTTEEEEEEENNNTTTNTNTNTNIONONONONONNONON")
+                
                 self.position_data.append({'x':position.center.x, 'y':position.center.y})
                 with open('./etudes/' + self.filename + '.txt', 'a') as f:
-                    f.write((f'timestamp={now},x={position.center.x},y={position.center.y},error={position.radius},'
-                             f'dist1={self.b1.distance},time1={self.b1.timestamp},'
-                             f'dist2={self.b2.distance},time2={self.b2.timestamp},'
-                             f'dist3={self.b3.distance},time3={self.b3.timestamp},'
-                             f'dist4={self.b4.distance},time4={self.b4.timestamp},'
-                             f'dist5={self.b5.distance},time5={self.b5.timestamp},'
-                             f'dist6={self.b6.distance},time6={self.b6.timestamp},\n'))
-        
+                    f.write(f'timestamp={now},x={position.center.x},y={position.center.y},error={position.radius},')
+                    for beacon in self.used_for_calculation_beacons:
+                        f.write(f'dist{beacon.name}={beacon.distance},time{beacon.name}={beacon.timestamp},')
+                    f.write('\n')
         while len(self.position_data) > self.POSITION_HISTORY_SIZE:
             self.position_data.pop(0)
 
@@ -153,9 +188,15 @@ class Backend():
 
     def provide_map_danger(self):
         data = []
+        xy_list = []
         with open("carte_danger.txt", "r") as f:
             for num in f.readlines():
                 num = num.split(",")
                 x, y, z = [num[1], num[2], num[3]]
-                data.append({'x': x, 'y':y})
+
+                xy_list.append(Point(x,y))
+                data.append({'x':num[1],'y':num[2]})
+
+        self.danger_zone = Polygon(xy_list)
+
         return data
