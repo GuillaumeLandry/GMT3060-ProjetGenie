@@ -196,7 +196,7 @@ class Backend():
         # data.append({'x':103,'y':99})
         # data.append({'x':103,'y':91})
         # data.append({'x':98,'y':91})
-        # self.danger_zone = Polygon(xy_list)
+        self.danger_zone = Polygon(xy_list)
 
         return data
     
