@@ -43,32 +43,32 @@ class Backend():
             print("Received 1 :", rssi) # Distance 3.70m
             with open('./etudes/RSSI_values/' + 'b1' + '.txt', 'a') as f:
                 f.write(f'{rssi}\n')
-            self.b1.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
+            self.b1.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b2.mac:
             print("Received 2 :", rssi) # Distance 6.10m
             with open('./etudes/RSSI_values/' + 'b2' + '.txt', 'a') as f:
                 f.write(f'{rssi}\n')
-            self.b2.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
+            self.b2.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b3.mac:
             print("Received 3 :", rssi) # Distance 5.00m
             with open('./etudes/RSSI_values/' + 'b3' + '.txt', 'a') as f:
                 f.write(f'{rssi}\n')
-            self.b3.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
+            self.b3.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b4.mac:
             print("Received 4 :", rssi) # Distance 4.50m
             with open('./etudes/RSSI_values/' + 'b4' + '.txt', 'a') as f:
                 f.write(f'{rssi}\n')
-            self.b4.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
+            self.b4.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b5.mac:
             print("Received 5 :", rssi) # Distance 6.40m
             with open('./etudes/RSSI_values/' + 'b5' + '.txt', 'a') as f:
                 f.write(f'{rssi}\n')
-            self.b5.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
+            self.b5.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b6.mac:
             print("Received 6 :", rssi) # Distance 3.50m
             with open('./etudes/RSSI_values/' + 'b6' + '.txt', 'a') as f:
                 f.write(f'{rssi}\n')
-            self.b6.set_telemetry(timestamp, receiverDevice, self.calculate_distance_from_rssi(rssi))
+            self.b6.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         
         self.start_getting_data()
         return "received"
@@ -78,16 +78,13 @@ class Backend():
         new_params = request['params']
 
         if new_params["filename"] == "":
-            print('________étude arrêtée________________')
-            
+            print('\nÉtude arrêtée.\n')
             self.filename = new_params["filename"]
             self.params_setted = False
-            
             return "ok"
 
         else:
-
-            print('________params setted________________', new_params)
+            print('\nParamètres mis à jour.\n', new_params)
             points = get_used_points(new_params.values())
             
             for point in points:
@@ -180,7 +177,7 @@ class Backend():
 
     def provide_map_lab(self):
         data = []
-        with open("carte_lab.txt", "r") as f:
+        with open("./cartographies/carte_lab.txt", "r") as f:
             for num in f.readlines():
                 num = num.split(",")
                 x, y, z = [num[1], num[2], num[3]]
@@ -190,7 +187,7 @@ class Backend():
     def provide_map_danger(self):
         data = []
         xy_list = []
-        with open("carte_danger.txt", "r") as f:
+        with open("./cartographies/carte_danger.txt", "r") as f:
             for num in f.readlines():
                 num = num.split(",")
                 x, y, z = [num[1], num[2], num[3]]

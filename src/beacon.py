@@ -24,8 +24,9 @@ class Beacon:
     def __init__(self, name, mac):
         self.name = name
         self.mac = mac
-        self.timestamp = None
+        self.rssi = None
         self.distance = None
+        self.timestamp = None
         
     def set_beacon_on_point(self, point):
         self.x = point.x
@@ -34,12 +35,14 @@ class Beacon:
     def myprint(self):
         return f"beacon {self.name}, {self.mac}_______________________{self.distance}"
 
-    def set_telemetry(self, timestamp, receiverDevice, distance):
+    def set_telemetry(self, timestamp, receiverDevice, rssi, distance):
         self.timestamp = format_timestamp(timestamp)
         self.receiverDevice = receiverDevice
+        self.rssi = rssi
         self.distance = distance
 
     def reset(self):
+        self.rssi = None
         self.distance = None
         self.timestamp = None
         self.receiverDevice = None
