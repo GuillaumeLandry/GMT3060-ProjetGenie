@@ -1,12 +1,13 @@
 
 from datetime import datetime
-from beacon import Beacon, all_beacons
-from points import get_used_points
+from utils.beacon import Beacon, all_beacons
+from utils.points import get_used_points
 from easy_trilateration.model import *  
 from easy_trilateration.least_squares import easy_least_squares  
 from easy_trilateration.graph import *  
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+import json
 
 class Backend():
     def __init__(self):
@@ -21,7 +22,6 @@ class Backend():
         # Listes et autres structures
         self.used_beacons = []
         self.data_positions = []
-        self.used_for_calculation_beacons = []
         self.danger_zone = Polygon()
 
         # Flags
@@ -134,17 +134,14 @@ class Backend():
     def essaye_calcul_position_parmi_les_listes_B1_B6(self):
         now = datetime.now()
         circles = []
-        self.used_for_calculation_beacons = []
 
         if len(self.used_beacons) >= 3: # minimum qu'on a besoin 
             for beacon in self.used_beacons:
-                if beacon.timestamp != None:
-                    delta_seconds = abs((beacon.timestamp - now).total_seconds() + 2.398774) # ce n'est pas bon
-                    if delta_seconds < 1:
-                        circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
-                        self.used_for_calculation_beacons.append(beacon)
-                    else:
-                        beacon.reset()
+                delta_seconds = abs((beacon.timestamp - now).total_seconds() + 2.398774) # ce n'est pas bon
+                if delta_seconds < 1:
+                    circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
+                else:
+                    beacon.reset()
 
             if len(circles) >= 3:
                 position, _ = easy_least_squares(circles)
@@ -155,19 +152,14 @@ class Backend():
     def provide_data(self):
         if self.etude_running:
             position = self.essaye_calcul_position_parmi_les_listes_B1_B6()
-            now = datetime.now()
             if position != None:
-
                 ## Process danger zone alert
                 if self.danger_zone.contains(Point(position.center.x,position.center.y)):
                     self.alert_flag = True
                 
+                # Append data and save to disk
                 self.data_positions.append({'x':position.center.x, 'y':position.center.y})
-                with open('./etudes/' + self.filename + '.txt', 'a') as f:
-                    f.write(f'timestamp={now},x={position.center.x},y={position.center.y},error={position.radius},')
-                    for beacon in self.used_for_calculation_beacons:
-                        f.write(f'dist{beacon.name}={beacon.distance},time{beacon.name}={beacon.timestamp},')
-                    f.write('\n')
+                self.log_position_to_disk(position)
 
         while len(self.data_positions) > self.POSITION_HISTORY_SIZE:
             self.data_positions.pop(0)
@@ -214,3 +206,48 @@ class Backend():
             return {'alert': 'alert'}
         else:
             return {'alert': ''}
+
+    def log_position_to_disk(self, position):
+        data = [{
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'position': {
+                'x': position.center.x,
+                'y': position.center.y,
+                'error': position.radius
+            },
+            'beacons': {
+                self.b1.name: {
+                    'rssi':self.b1.rssi,
+                    'dist':self.b1.distance,
+                    'timestamp':self.b1.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                },
+                self.b2.name: {
+                    'rssi':self.b2.rssi,
+                    'dist':self.b2.distance,
+                    'timestamp':self.b2.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                },
+                self.b3.name: {
+                    'rssi':self.b3.rssi,
+                    'dist':self.b3.distance,
+                    'timestamp':self.b3.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                },
+                self.b4.name: {
+                    'rssi':self.b4.rssi,
+                    'dist':self.b4.distance,
+                    'timestamp':self.b4.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                },
+                self.b5.name: {
+                    'rssi':self.b5.rssi,
+                    'dist':self.b5.distance,
+                    'timestamp':self.b5.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                },
+                self.b6.name: {
+                    'rssi':self.b6.rssi,
+                    'dist':self.b6.distance,
+                    'timestamp':self.b6.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                }
+            }
+        }]
+        with open('./etudes/' + self.filename + '.json', 'a') as f:
+            json.dump(data, f)
+            f.write('\n')

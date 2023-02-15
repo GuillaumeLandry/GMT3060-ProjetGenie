@@ -9,8 +9,6 @@ backend = server_backend.Backend()
 
 @app.route("/")
 def render():
-    log = logging.getLogger('werkzeug')
-    log.setLevel(logging.ERROR)
     return render_template('index.html', data_ble=2)
 
 @app.route("/ble", methods=["POST"])
@@ -24,6 +22,8 @@ def etude():
 
 @app.route("/provide", methods=["GET"])
 def provide():
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
     return backend.provide_data()
 
 @app.route("/map-lab", methods=["GET"])

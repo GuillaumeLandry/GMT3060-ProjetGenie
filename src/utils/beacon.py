@@ -14,7 +14,7 @@ all_beacons = [
         'mac':'FD:D0:C6:19:B1:E9'}, # Guillaume - Mauve (FA:CD:C3:16:AE:E6) (3C:C8:89:AB:A2:38)
     ]
 
-def format_timestamp( timestamp):     
+def format_timestamp(timestamp):     
     dt = timestamp.split('EST ')
     datetime_str = dt[0] + dt[1]
     datetime_object = datetime.strptime(datetime_str, '%a %b %d %H:%M:%S %Y')
@@ -26,7 +26,7 @@ class Beacon:
         self.mac = mac
         self.rssi = None
         self.distance = None
-        self.timestamp = None
+        self.timestamp = datetime.min
         
     def set_beacon_on_point(self, point):
         self.x = point.x
@@ -44,6 +44,6 @@ class Beacon:
     def reset(self):
         self.rssi = None
         self.distance = None
-        self.timestamp = None
+        self.timestamp = datetime.min
         self.receiverDevice = None
 
