@@ -34,5 +34,9 @@ def map_lab():
 def map_danger():
     return backend.provide_map_danger()
 
+@app.route("/alert", methods=["GET"])
+def alert():
+    return backend.send_alert_flag()
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0')

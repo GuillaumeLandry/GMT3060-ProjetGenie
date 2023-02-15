@@ -162,6 +162,16 @@
             chart.update();
           });
       }, 1000);
+
+      setInterval(function() {
+        fetch('/alert')
+          .then(response => response.json())
+          .then(data => {
+            if (data.alert == 'alert') {
+              alert("Attention, l'utilisateur est dans une zone de danger !")
+            }
+          });
+      }, 1000);
     </script>
   </body>
 </html>

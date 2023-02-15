@@ -24,8 +24,8 @@ class Beacon:
     def __init__(self, name, mac):
         self.name = name
         self.mac = mac
-        self.timestamp = 0
-        self.distance = 0
+        self.timestamp = None
+        self.distance = None
         
     def set_beacon_on_point(self, point):
         self.x = point.x
@@ -39,5 +39,8 @@ class Beacon:
         self.receiverDevice = receiverDevice
         self.distance = distance
 
-
+    def reset(self):
+        self.distance = None
+        self.timestamp = None
+        self.receiverDevice = None
 

@@ -22,8 +22,9 @@ class Backend():
         self.start_ = False
         self.params_setted = False
         self.position_data = []
-        self.danger_zone = []
+        self.danger_zone = Polygon()
         self.POSITION_HISTORY_SIZE = 20
+        self.alert_flag = False
     
     def start_getting_data(self):
         if self.start_ == False and self.params_setted == True:
@@ -141,14 +142,13 @@ class Backend():
 
         if len(self.used_beacons) >= 3: # minimum qu'on a besoin 
             for beacon in self.used_beacons:
-                if beacon.timestamp != 0:
+                if beacon.timestamp != None:
                     delta_seconds = abs((beacon.timestamp - now).total_seconds() + 2.398774) # ce n'est pas bon
                     if delta_seconds < 1:
                         circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
                         self.used_for_calculation_beacons.append(beacon)
                     else:
-                        beacon.timestamp = 0
-                        beacon.distance = 0
+                        beacon.reset()
 
             if len(circles) >= 3:
                 position, _ = easy_least_squares(circles)
@@ -163,8 +163,8 @@ class Backend():
             if position != None:
 
                 ## Process danger zone alert
-                # if self.danger_zone.contains(Point(position.center.x,position.center.y)):
-                #     print("ATTTTEEEEEEENNNTTTNTNTNTNIONONONONONNONON")
+                if self.danger_zone.contains(Point(position.center.x,position.center.y)):
+                    self.alert_flag = True
                 
                 self.position_data.append({'x':position.center.x, 'y':position.center.y})
                 with open('./etudes/' + self.filename + '.txt', 'a') as f:
@@ -172,6 +172,7 @@ class Backend():
                     for beacon in self.used_for_calculation_beacons:
                         f.write(f'dist{beacon.name}={beacon.distance},time{beacon.name}={beacon.timestamp},')
                     f.write('\n')
+
         while len(self.position_data) > self.POSITION_HISTORY_SIZE:
             self.position_data.pop(0)
 
@@ -197,6 +198,23 @@ class Backend():
                 xy_list.append(Point(x,y))
                 data.append({'x':num[1],'y':num[2]})
 
-        self.danger_zone = Polygon(xy_list)
+        # xy_list.append(Point(98,91))
+        # xy_list.append(Point(98,99))
+        # xy_list.append(Point(103,99))
+        # xy_list.append(Point(103,91))
+        # xy_list.append(Point(98,91))
+        # data.append({'x':98,'y':91})
+        # data.append({'x':98,'y':99})
+        # data.append({'x':103,'y':99})
+        # data.append({'x':103,'y':91})
+        # data.append({'x':98,'y':91})
+        # self.danger_zone = Polygon(xy_list)
 
         return data
+    
+    def send_alert_flag(self):
+        if self.alert_flag == True:
+            self.alert_flag = False
+            return {'alert': 'alert'}
+        else:
+            return {'alert': ''}

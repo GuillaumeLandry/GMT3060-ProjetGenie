@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.Objects;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -107,12 +108,12 @@ public class MainActivity extends AppCompatActivity {
             String b6 = "FD:D0:C6:19:B1:E9";
 
             if (
-                bleDevice == b1 ||
-                bleDevice == b2 ||
-                bleDevice == b3 ||
-                bleDevice == b4 ||
-                bleDevice == b5 ||
-                bleDevice == b6) 
+                Objects.equals(bleDevice, b1) ||
+                Objects.equals(bleDevice, b2) ||
+                Objects.equals(bleDevice, b3) ||
+                Objects.equals(bleDevice, b4) ||
+                Objects.equals(bleDevice, b5) ||
+                Objects.equals(bleDevice, b6))
             {
                 // SEND DATA TO SERVER
                 RequestBody formbody
