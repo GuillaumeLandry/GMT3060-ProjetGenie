@@ -137,11 +137,12 @@ class Backend():
 
         if len(self.used_beacons) >= 3: # minimum qu'on a besoin 
             for beacon in self.used_beacons:
-                delta_seconds = abs((beacon.timestamp - now).total_seconds() + 2.398774) # ce n'est pas bon
-                if delta_seconds < 1:
-                    circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
-                else:
-                    beacon.reset()
+                if beacon.distance != None:
+                    delta_seconds = abs((beacon.timestamp - now).total_seconds() + 2.398774) # ce n'est pas bon
+                    if delta_seconds < 1:
+                        circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
+                    else:
+                        beacon.reset()
 
             if len(circles) >= 3:
                 position, _ = easy_least_squares(circles)
