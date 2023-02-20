@@ -41,33 +41,21 @@ class Backend():
         # on peut creer une classe générale pour beacons et écrire ça dans une-deux lignes, au besoin
         if bleDevice == self.b1.mac:
             print("Received 1 :", rssi) # Distance 3.70m
-            with open('./etudes/RSSI_values/' + 'b1' + '.txt', 'a') as f:
-                f.write(f'{rssi}\n')
             self.b1.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b2.mac:
             print("Received 2 :", rssi) # Distance 6.10m
-            with open('./etudes/RSSI_values/' + 'b2' + '.txt', 'a') as f:
-                f.write(f'{rssi}\n')
             self.b2.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b3.mac:
             print("Received 3 :", rssi) # Distance 5.00m
-            with open('./etudes/RSSI_values/' + 'b3' + '.txt', 'a') as f:
-                f.write(f'{rssi}\n')
             self.b3.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b4.mac:
             print("Received 4 :", rssi) # Distance 4.50m
-            with open('./etudes/RSSI_values/' + 'b4' + '.txt', 'a') as f:
-                f.write(f'{rssi}\n')
             self.b4.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b5.mac:
             print("Received 5 :", rssi) # Distance 6.40m
-            with open('./etudes/RSSI_values/' + 'b5' + '.txt', 'a') as f:
-                f.write(f'{rssi}\n')
             self.b5.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         elif bleDevice == self.b6.mac:
             print("Received 6 :", rssi) # Distance 3.50m
-            with open('./etudes/RSSI_values/' + 'b6' + '.txt', 'a') as f:
-                f.write(f'{rssi}\n')
             self.b6.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
         
         return "received"
@@ -210,7 +198,7 @@ class Backend():
 
     def log_position_to_disk(self, position):
         data = [{
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'),
             'position': {
                 'x': position.center.x,
                 'y': position.center.y,
@@ -220,32 +208,32 @@ class Backend():
                 self.b1.name: {
                     'rssi':self.b1.rssi,
                     'dist':self.b1.distance,
-                    'timestamp':self.b1.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    'timestamp':self.b1.timestamp.strftime('%H:%M:%S.%f')[:-3]
                 },
                 self.b2.name: {
                     'rssi':self.b2.rssi,
                     'dist':self.b2.distance,
-                    'timestamp':self.b2.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    'timestamp':self.b2.timestamp.strftime('%H:%M:%S.%f')[:-3]
                 },
                 self.b3.name: {
                     'rssi':self.b3.rssi,
                     'dist':self.b3.distance,
-                    'timestamp':self.b3.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    'timestamp':self.b3.timestamp.strftime('%H:%M:%S.%f')[:-3]
                 },
                 self.b4.name: {
                     'rssi':self.b4.rssi,
                     'dist':self.b4.distance,
-                    'timestamp':self.b4.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    'timestamp':self.b4.timestamp.strftime('%H:%M:%S.%f')[:-3]
                 },
                 self.b5.name: {
                     'rssi':self.b5.rssi,
                     'dist':self.b5.distance,
-                    'timestamp':self.b5.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    'timestamp':self.b5.timestamp.strftime('%H:%M:%S.%f')[:-3]
                 },
                 self.b6.name: {
                     'rssi':self.b6.rssi,
                     'dist':self.b6.distance,
-                    'timestamp':self.b6.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    'timestamp':self.b6.timestamp.strftime('%H:%M:%S.%f')[:-3]
                 }
             }
         }]

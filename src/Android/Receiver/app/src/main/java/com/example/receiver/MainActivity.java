@@ -115,10 +115,10 @@ public class MainActivity extends AppCompatActivity {
                 Objects.equals(bleDevice, b5) ||
                 Objects.equals(bleDevice, b6))
             {
-                // SEND DATA TO SERVER
+                // Send data to server
                 RequestBody formbody
                         = new FormBody.Builder()
-                        .add("Timestamp", Calendar.getInstance().getTime().toString())
+                        .add("Timestamp", String.valueOf(Calendar.getInstance().getTimeInMillis()))
                         .add("ReceiverDevice", Build.MODEL + " (" + Build.ID + ")")
                         .add("BLEDevice", bleDevice)
                         .add("RSSI", String.valueOf(result.getRssi()))
