@@ -7,6 +7,11 @@ function etude_start() {
     var b4 = document.getElementById("B4");
     var b5 = document.getElementById("B5");
     var b6 = document.getElementById("B6");
+    
+    if (filename.value == "") {
+        alert("Veuillez donner un nom à l'étude.");
+        return;
+    }
 
     $.ajax({
         type: 'POST',
@@ -21,8 +26,7 @@ function etude_start() {
                 "B5": b5.value,
                 "B6": b6.value
            }
-        })
-        ,
+        }),
         dataType: "json",
         contentType:"application/json",
         complete: function () {
@@ -43,8 +47,7 @@ function etude_stop() {
             "params": {
                 "filename": ""
            }
-        })
-        ,
+        }),
         dataType: "json",
         contentType:"application/json",
         complete: function () {
@@ -53,6 +56,35 @@ function etude_stop() {
         
             var etude_params = document.getElementById("etude-params");
             etude_params.style.display = "block";
+        }
+    });
+}
+
+function etude_plot() {
+    var filename = document.getElementById("etude-name");
+
+    if (filename.value == "") {
+        alert("Veuillez donner un nom à l'étude.");
+        return;
+    }
+
+    $.ajax({
+        type: 'POST',
+        url: "http://localhost:5000/plot",
+        data: JSON.stringify({
+            "params": {
+                "filename": filename.value
+           }
+        }),
+        dataType: "json",
+        contentType:"application/json",
+        complete: function (response) {
+
+            if (response.responseText == "erreur") {
+                alert("Vérifier le nom de l'étude. Il y a eu une erreur lors du calcul des statistiques.")
+            } else {
+                alert("Le calcul des statistiques a été effectué et les résultats sont exportés.")
+            }
         }
     });
 }

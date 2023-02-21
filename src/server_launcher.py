@@ -1,7 +1,8 @@
-import server_backend as server_backend
 from flask import Flask, request, render_template
 from flask_cors import CORS, cross_origin
 import logging
+import server_backend as server_backend
+from plot_study import DataPlotter
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
@@ -19,6 +20,10 @@ def ble():
 @cross_origin()
 def etude():
     return backend.update_params_etude(request.json)
+
+@app.route("/plot", methods=["POST"])
+def plot():
+    return backend.plot_study(request.json)
 
 @app.route("/provide", methods=["GET"])
 def provide():

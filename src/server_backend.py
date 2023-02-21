@@ -7,7 +7,9 @@ from easy_trilateration.least_squares import easy_least_squares
 from easy_trilateration.graph import *  
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+from plot_study import DataPlotter
 import json
+import os
 
 class Backend():
     def __init__(self):
@@ -66,7 +68,7 @@ class Backend():
 
         if new_params["filename"] == "":
             print('\nÉtude arrêtée.\n')
-            self.filename = new_params["filename"]
+            self.etude_name = new_params["filename"]
             self.etude_running = False
             return "ok"
 
@@ -97,23 +99,13 @@ class Backend():
                     pass
                 # throw error pas de pointe associée... qqch comme ça
             
-            self.filename = new_params["filename"]
+            self.etude_name = new_params["filename"]
             self.etude_running = True
 
             return "ok"
 
     def calculate_distance_from_rssi(self, rssi):
-        # Version 2
-        # friis_transmission_constant = 41.2
-        # tx_power = 10
-        # path_loss_exponent = 2 # =2 dans un environnement libre. Probablement plus haut en intérieur
-        # return 10**((tx_power - int(rssi) - friis_transmission_constant) / (10 * path_loss_exponent))
-        
-        # Version 3
-        # tx_power = 10
-        # return float(10**((tx_power-int(rssi))/40))
-
-        # Version 1 (https://iotandelectronics.wordpress.com/2016/10/07/how-to-calculate-distance-from-the-rssi-value-of-the-ble-beacon/)
+        # (https://iotandelectronics.wordpress.com/2016/10/07/how-to-calculate-distance-from-the-rssi-value-of-the-ble-beacon/)
         # https://community.estimote.com/hc/en-us/articles/201636913-What-are-Broadcasting-Power-RSSI-and-other-characteristics-of-a-beacon-s-signal-        
         measured_power = -37 # Default -69 | (Voir fichier Excel pour explication de cette valeur)
         path_loss_exponent = 4 # =2 dans un environnement libre. Probablement plus haut en intérieur entre [2,4]
@@ -237,6 +229,19 @@ class Backend():
                 }
             }
         }]
-        with open('./etudes/' + self.filename + '.json', 'a') as f:
+
+        output_dir = f'./etudes/{self.etude_name}'
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        with open(f'{output_dir}/{self.etude_name}.json', 'a') as f:
             json.dump(data, f)
             f.write('\n')
+
+    def plot_study(self, request):
+        try:
+            plotter = DataPlotter(request['params']['filename'])
+            plotter.create_and_export_stats()
+            return "exporté"
+        except:
+            return "erreur"

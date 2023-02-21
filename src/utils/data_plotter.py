@@ -4,17 +4,21 @@ import argparse
 import os
 
 class DataPlotter:
-    def __init__(self, etude_name, beacon_name):
+    def __init__(self, etude_name, beacon_name, flag_all):
         self.etude_name = etude_name
         self.beacon_name = beacon_name
         self.distances = []
         self.rssis = []
         self.timestamps = []
-        self.positions = []
+        self.positionsX = []
+        self.positionsY = []
         self.errors = []
 
-        self.load_data()
-        self.plot_data()
+        if (flag_all == True):
+            self.load_and_plot_all()
+        else: 
+            self.load_data()
+            self.plot_data()
 
     def load_data(self):
         self.reset()
@@ -24,10 +28,12 @@ class DataPlotter:
 
                 if obj['beacons'][self.beacon_name]['dist'] is not None:
                     self.timestamps.append(self.format_timestamp(obj['timestamp']))
-                    self.positions.append(obj['position']) ## TODO NON FONCTIONNEL
+                    self.positionsX.append(obj['position']['x']) ## TODO NON FONCTIONNEL
+                    self.positionsY.append(obj['position']['y']) ## TODO NON FONCTIONNEL
                     self.errors.append(float(obj['position']['error']))
                     self.distances.append(float(obj['beacons'][self.beacon_name]['dist']))
                     self.rssis.append(float(obj['beacons'][self.beacon_name]['rssi']))
+        
         self.prepare_timestamps_affichage()
 
     def plot_data(self):
@@ -37,25 +43,32 @@ class DataPlotter:
         fig.subplots_adjust(hspace=0.6)
 
         # GRAPH 1
-        axs[0, 0].set_title('Variations de RSSI')
+        axs[0, 0].set_title('RSSI')
         axs[0, 0].set_xlabel('Temps (s)')
         axs[0, 0].set_xticklabels(self.ts_affichage, rotation=45)
         axs[0, 0].set_ylabel('RSSI (dBm)')
         axs[0, 0].plot(self.ts_affichage, self.rssis)
 
         # GRAPH 2
-        axs[0, 1].set_title('Variations de distances')
+        axs[0, 1].set_title('Distances')
         axs[0, 1].set_xlabel('Temps (s)')
         axs[0, 1].set_xticklabels(self.ts_affichage, rotation=45)
         axs[0, 1].set_ylabel('Distances (m)')
         axs[0, 1].plot(self.ts_affichage, self.distances)
 
         # GRAPH 3
-        axs[1, 0].set_title('Variations des erreurs')
+        axs[1, 0].set_title('Erreurs')
         axs[1, 0].set_xlabel('Temps (s)')
         axs[1, 0].set_xticklabels(self.ts_affichage, rotation=45)
         axs[1, 0].set_ylabel('Erreurs (m)')
         axs[1, 0].plot(self.ts_affichage, self.errors)
+
+        # GRAPH 4
+        axs[1, 1].set_title('Positions')
+        axs[1, 1].set_xlabel('Coordonnées X (m)')
+        ##axs[1, 0].set_xticklabels(self.positionsX, rotation=45)
+        axs[1, 1].set_ylabel('Coordonnées Y (m)')
+        axs[1, 1].plot(self.positionsX, self.positionsY)
 
         # Display the plot
         if not os.path.exists(f'../etudes/Figures_{self.etude_name}'):
@@ -67,7 +80,8 @@ class DataPlotter:
         self.distances = []
         self.rssis = []
         self.timestamps = []
-        self.positions = []
+        self.positionsX = []
+        self.positionsY = []
         self.errors = []
         self.ts_affichage = []
 
@@ -88,8 +102,9 @@ class DataPlotter:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Comment utiliser le script: python data_plotter.py -e <nom_fichier_sans_extension> -b <nom_beacon')
     parser.add_argument('-e', '--etude', type=str, help='Nom du fichier d\'étude à lire (sans son extension .json)')
-    parser.add_argument('-b', '--beacon', type=str, help='Nom (numéro) de la balise pour laquelle afficher les données')
+    parser.add_argument('-b', '--beacon', type=str, default='', help='Nom (numéro) de la balise pour laquelle afficher les données')
+    parser.add_argument('-a', '--all', default=False, action='store_true', help='Affiche les donées de toutes les balises dans des graphiques conjoints')
 
     args = parser.parse_args()
 
-    plotter = DataPlotter(args.etude, args.beacon)
+    plotter = DataPlotter(args.etude, args.beacon, args.all)
