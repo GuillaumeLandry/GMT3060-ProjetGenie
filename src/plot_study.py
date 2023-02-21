@@ -160,8 +160,11 @@ class DataPlotter:
 
         with open(f'{output_dir}/{self.etude_name}.html', 'w') as f:
             f.write(f'<h1 style="text-align: center;">Donnees de telemetrie et de traitements<br></h1>'
-                    f'<h2 style="text-align: center;">Etude: {self.etude_name}<br>'
-                    f'Debut: {self.timestamps[0][:-7]}</h2>')
+                    f'<h2 style="text-align: center; justify"><div style="display: inline-block; text-align: left;">'
+                    f'Etude : {self.etude_name}<br>'
+                    f'Debut : {self.timestamps[0][:-7]}<br>'
+                    f'Fin   : {self.timestamps[-1][:-7]}<br>'
+                    f'Duree : {self.timestamps_affichage[-1]} s</h2></div>')
             f.write(figures[0].to_html(include_plotlyjs='cdn'))
             pio.write_image(figures[0], file=f'{output_dir}/{self.etude_name}_{figures[0].layout.title.text}.png', scale=4)
             
