@@ -21,31 +21,15 @@ class StudyPlotter:
         self.errors = []
 
         # Données des balises
-        self.B1_dist = []
-        self.B1_rssi = []
-        self.B1_rssi_kalman = []
-
-        self.B2_dist = []
-        self.B2_rssi = []
-        self.B2_rssi_kalman = []
-
-        self.B3_dist = []
-        self.B3_rssi = []
-        self.B3_rssi_kalman = []
-
-        self.B4_dist = []
-        self.B4_rssi = []
-        self.B4_rssi_kalman = []
-
-        self.B5_dist = []
-        self.B5_rssi = []
-        self.B5_rssi_kalman = []
-
-        self.B6_dist = []
-        self.B6_rssi = []
-        self.B6_rssi_kalman = []
+        self.beacons = {1: {"dist": [], "rssi": [], "rssi_kalman": []},
+                        2: {"dist": [], "rssi": [], "rssi_kalman": []},
+                        3: {"dist": [], "rssi": [], "rssi_kalman": []},
+                        4: {"dist": [], "rssi": [], "rssi_kalman": []},
+                        5: {"dist": [], "rssi": [], "rssi_kalman": []},
+                        6: {"dist": [], "rssi": [], "rssi_kalman": []}}
                     
     def process_plots(self):
+        # Toute la chaine de traitement pour produire les graphiques
         self.load_study()
         self.create_plots()
         self.export_plots()
@@ -72,92 +56,57 @@ class StudyPlotter:
                 self.positionsY.append(obj['position']['y'])
                 self.errors.append(float(obj['position']['error']))
 
-                # Balise 1
-                if self.check_valid(obj['beacons']['1']):
-                    self.B1_dist.append(float(obj['beacons']['1']['dist']))
-                    self.B1_rssi.append(float(obj['beacons']['1']['rssi']))
-                    self.B1_rssi_kalman.append(float(obj['beacons']['1']['rssi_kalman']))
-                else:
-                    self.B1_dist.append(obj['beacons']['1']['dist'])
-                    self.B1_rssi.append(obj['beacons']['1']['rssi'])
-                    self.B1_rssi_kalman.append(obj['beacons']['1']['rssi_kalman'])
-
-                # Balise 2
-                if self.check_valid(obj['beacons']['2']):
-                    self.B2_dist.append(float(obj['beacons']['2']['dist']))
-                    self.B2_rssi.append(float(obj['beacons']['2']['rssi']))
-                    self.B2_rssi_kalman.append(float(obj['beacons']['2']['rssi_kalman']))
-                else:
-                    self.B2_dist.append(obj['beacons']['2']['dist'])
-                    self.B2_rssi.append(obj['beacons']['2']['rssi'])
-                    self.B2_rssi_kalman.append(obj['beacons']['2']['rssi_kalman'])
-                
-                # Balise 3
-                if self.check_valid(obj['beacons']['3']):
-                    self.B3_dist.append(float(obj['beacons']['3']['dist']))
-                    self.B3_rssi.append(float(obj['beacons']['3']['rssi']))
-                    self.B3_rssi_kalman.append(float(obj['beacons']['3']['rssi_kalman']))
-                else:
-                    self.B3_dist.append(obj['beacons']['3']['dist'])
-                    self.B3_rssi.append(obj['beacons']['3']['rssi'])
-                    self.B3_rssi_kalman.append(obj['beacons']['3']['rssi_kalman'])
-
-                # Balise 4
-                if self.check_valid(obj['beacons']['4']):
-                    self.B4_dist.append(float(obj['beacons']['4']['dist']))
-                    self.B4_rssi.append(float(obj['beacons']['4']['rssi']))
-                    self.B4_rssi_kalman.append(float(obj['beacons']['4']['rssi_kalman']))
-                else:
-                    self.B4_dist.append(obj['beacons']['4']['dist'])
-                    self.B4_rssi.append(obj['beacons']['4']['rssi'])
-                    self.B4_rssi_kalman.append(obj['beacons']['4']['rssi_kalman'])
-
-                # Balise 5
-                if self.check_valid(obj['beacons']['5']):
-                    self.B5_dist.append(float(obj['beacons']['5']['dist']))
-                    self.B5_rssi.append(float(obj['beacons']['5']['rssi']))
-                    self.B5_rssi_kalman.append(float(obj['beacons']['5']['rssi_kalman']))
-                else:
-                    self.B5_dist.append(obj['beacons']['5']['dist'])
-                    self.B5_rssi.append(obj['beacons']['5']['rssi'])
-                    self.B5_rssi_kalman.append(obj['beacons']['5']['rssi_kalman'])
-                
-                # Balise 6
-                if self.check_valid(obj['beacons']['6']):
-                    self.B6_dist.append(float(obj['beacons']['6']['dist']))
-                    self.B6_rssi.append(float(obj['beacons']['6']['rssi']))
-                    self.B6_rssi_kalman.append(float(obj['beacons']['6']['rssi_kalman']))
-                else:
-                    self.B6_dist.append(obj['beacons']['6']['dist'])
-                    self.B6_rssi.append(obj['beacons']['6']['rssi'])
-                    self.B6_rssi_kalman.append(obj['beacons']['6']['rssi_kalman'])
+                for i in range(1, 7):
+                    if obj['beacons'][str(i)]['dist'] != None:
+                        self.beacons[i]['dist'].append(float(obj['beacons'][str(i)]['dist']))
+                        self.beacons[i]['rssi'].append(float(obj['beacons'][str(i)]['rssi']))
+                        self.beacons[i]['rssi_kalman'].append(float(obj['beacons'][str(i)]['rssi_kalman']))
+                    else:
+                        self.beacons[i]['dist'].append(obj['beacons'][str(i)]['dist'])
+                        self.beacons[i]['rssi'].append(obj['beacons'][str(i)]['rssi'])
+                        self.beacons[i]['rssi_kalman'].append(obj['beacons'][str(i)]['rssi_kalman'])
         
         self.format_timestamps_affichage()
 
     def create_plots(self):
         # RSSI
-        B1_plot_rssi = go.Scatter(name="B1", x=self.timestamps_affichage,y=self.B1_rssi,mode='lines+markers')
-        B2_plot_rssi = go.Scatter(name="B2", x=self.timestamps_affichage,y=self.B2_rssi,mode='lines+markers',visible='legendonly')
-        B3_plot_rssi = go.Scatter(name="B3", x=self.timestamps_affichage,y=self.B3_rssi,mode='lines+markers',visible='legendonly')
-        B4_plot_rssi = go.Scatter(name="B4", x=self.timestamps_affichage,y=self.B4_rssi,mode='lines+markers',visible='legendonly')
-        B5_plot_rssi = go.Scatter(name="B5", x=self.timestamps_affichage,y=self.B5_rssi,mode='lines+markers',visible='legendonly')
-        B6_plot_rssi = go.Scatter(name="B6", x=self.timestamps_affichage,y=self.B6_rssi,mode='lines+markers',visible='legendonly')
-        figure_rssi = go.Figure(data=[B1_plot_rssi, B2_plot_rssi, B3_plot_rssi, B4_plot_rssi, B5_plot_rssi, B6_plot_rssi])
+        rssi_plots = []
+        for i in range(1,7):
+            rssi_plots.append(go.Scatter(name=f'B{i}', x=self.timestamps_affichage, y=self.beacons[i]['rssi'], mode='lines+markers'))
+        figure_rssi = go.Figure(data=rssi_plots)
         figure_rssi.update_layout(
-            title='RSSI',
+            title='RSSI Brut',
+            title_x=0.5,
+            xaxis_title='Temps écoulé (s)',
+            yaxis_title='RSSI (dbm)'
+        )
+
+        # Kalman
+        kalman_plots = []
+        for i in range(1,7):
+            kalman_plots.append(go.Scatter(name=f'B{i}_kalman', x=self.timestamps_affichage, y=self.beacons[i]['rssi_kalman'], mode='lines+markers'))
+        figure_kalman = go.Figure(data=kalman_plots)
+        figure_kalman.update_layout(
+            title='RSSI Kalman',
+            title_x=0.5,
+            xaxis_title='Temps écoulé (s)',
+            yaxis_title='RSSI (dbm)'
+        )
+
+        # Combiné (Brut + Kalman)
+        figure_combine = go.Figure(data=rssi_plots + kalman_plots)
+        figure_combine.update_layout(
+            title='RSSI Combine (Brut + Kalman)',
             title_x=0.5,
             xaxis_title='Temps écoulé (s)',
             yaxis_title='RSSI (dbm)'
         )
 
         # Distances
-        B1_plot_dist = go.Scatter(name="B1", x=self.timestamps_affichage,y=self.B1_dist,mode='lines+markers')
-        B2_plot_dist = go.Scatter(name="B2", x=self.timestamps_affichage,y=self.B2_dist,mode='lines+markers',visible='legendonly')
-        B3_plot_dist = go.Scatter(name="B3", x=self.timestamps_affichage,y=self.B3_dist,mode='lines+markers',visible='legendonly')
-        B4_plot_dist = go.Scatter(name="B4", x=self.timestamps_affichage,y=self.B4_dist,mode='lines+markers',visible='legendonly')
-        B5_plot_dist = go.Scatter(name="B5", x=self.timestamps_affichage,y=self.B5_dist,mode='lines+markers',visible='legendonly')
-        B6_plot_dist = go.Scatter(name="B6", x=self.timestamps_affichage,y=self.B6_dist,mode='lines+markers',visible='legendonly')
-        figure_dist = go.Figure(data=[B1_plot_dist, B2_plot_dist, B3_plot_dist, B4_plot_dist, B5_plot_dist, B6_plot_dist])
+        dist_plots = []
+        for i in range(1,7):
+            dist_plots.append(go.Scatter(name=f'B{i}', x=self.timestamps_affichage, y=self.beacons[i]['dist'], mode='lines+markers'))
+        figure_dist = go.Figure(data=dist_plots)
         figure_dist.update_layout(
             title='Distances',
             title_x=0.5,
@@ -185,91 +134,70 @@ class StudyPlotter:
             yaxis_title='Coordonnée Y (m)'
         )
 
-        # Kalman
-        B1_plot_rssi_kalman = go.Scatter(name="B1_kalman", x=self.timestamps_affichage,y=self.B1_rssi_kalman,mode='lines+markers')
-        B2_plot_rssi_kalman = go.Scatter(name="B2_kalman", x=self.timestamps_affichage,y=self.B2_rssi_kalman,mode='lines+markers',visible='legendonly')
-        B3_plot_rssi_kalman = go.Scatter(name="B3_kalman", x=self.timestamps_affichage,y=self.B3_rssi_kalman,mode='lines+markers',visible='legendonly')
-        B4_plot_rssi_kalman = go.Scatter(name="B4_kalman", x=self.timestamps_affichage,y=self.B4_rssi_kalman,mode='lines+markers',visible='legendonly')
-        B5_plot_rssi_kalman = go.Scatter(name="B5_kalman", x=self.timestamps_affichage,y=self.B5_rssi_kalman,mode='lines+markers',visible='legendonly')
-        B6_plot_rssi_kalman = go.Scatter(name="B6_kalman", x=self.timestamps_affichage,y=self.B6_rssi_kalman,mode='lines+markers',visible='legendonly')
-        figure_rssi_kalman = go.Figure(data=[B1_plot_rssi, B1_plot_rssi_kalman, 
-                                             B2_plot_rssi, B2_plot_rssi_kalman,
-                                             B3_plot_rssi, B3_plot_rssi_kalman,
-                                             B4_plot_rssi, B4_plot_rssi_kalman,
-                                             B5_plot_rssi, B5_plot_rssi_kalman,
-                                             B6_plot_rssi, B6_plot_rssi_kalman])
-        figure_rssi_kalman.update_layout(
-            title='RSSI Kalman',
-            title_x=0.5,
-            xaxis_title='Temps écoulé (s)',
-            yaxis_title='RSSI (dbm)'
-        )
-
-        self.stats_figures = [figure_rssi, figure_rssi_kalman, figure_dist, figure_erreur, figure_position]
+        self.stats_figures = [figure_rssi, figure_kalman, figure_combine, figure_dist, figure_erreur, figure_position]
 
     def export_plots(self):
-        with open(f'{self.etude_directory}/{self.etude_name}.html', 'w') as f:
-            f.write(f'<h1 style="text-align: center;">Donnees de telemetrie et de traitements<br></h1>'
-                    f'<h2 style="text-align: center; justify"><div style="display: inline-block; text-align: left;">'
-                    f'Etude : {self.etude_name}<br>'
-                    f'Debut : {self.timestamps[0][:-7]}<br>'
-                    f'Fin   : {self.timestamps[-1][:-7]}<br>'
-                    f'Duree : {self.timestamps_affichage[-1]} s</h2></div>')
-            f.write(self.stats_figures[0].to_html(include_plotlyjs='cdn'))
-            pio.write_image(self.stats_figures[0], file=f'{self.etude_directory}/{self.etude_name}_{self.stats_figures[0].layout.title.text}.png', scale=4)
-            
-            for fig in self.stats_figures[1:]:
-                f.write(fig.to_html(full_html=False, include_plotlyjs=False))
-                pio.write_image(fig, file=f'{self.etude_directory}/{self.etude_name}_{fig.layout.title.text}.png', scale=4)
-            
+        with open(f'{self.etude_directory}/{self.etude_name}.html', 'w') as f: 
+            f.write('<html>\n')
+            f.write('<head>\n')
+            f.write(f'<title>{self.etude_name}</title>\n')
+            f.write('<style>\n')
+            f.write('body { font-family: Arial, Helvetica, sans-serif; }\n')
+            f.write('h1 { text-align: center; font-size: 36px; margin-top: 50px; }\n')
+            f.write('h2 { text-align: center; font-size: 24px; margin-top: 30px; }\n')
+            f.write('.container { display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 50px; }\n')
+            f.write('.plot-container { width: 48%; height: 500px; margin-bottom: 50px; }\n')
+            f.write('.separator { border-top: 2px solid black; margin: 50px 0; }\n')
+            f.write('</style>\n')
+            f.write('</head>\n')
+            f.write('<body>\n')
+            f.write(f'<h1>Donnees de telemetrie et de traitements</h1>\n')
+            f.write(f'<h2>Etude : {self.etude_name}</h2>\n')
+            f.write(f'<h2>Debut : {self.timestamps[0][:-7]} | Fin : {self.timestamps[-1][:-7]} | Duree : {self.timestamps_affichage[-1]} s</h2>\n')
+            f.write('<hr class="separator">\n')
+            f.write('<div class="container">\n')
+            for i, fig in enumerate(self.stats_figures):
+                f.write(f'<div class="plot-container">\n')
+                #f.write(f'<h2 style="text-align:center;">Graphique {i+1} - {fig.layout.title.text}</h2>\n')
+                f.write(fig.to_html(include_plotlyjs='cdn'))
+                f.write('</div>\n')
+            f.write('</div>\n')
+            f.write('</body>\n')
+            f.write('</html>\n')
+
         uri = pathlib.Path(f'{self.etude_directory}/{self.etude_name}.html').absolute().as_uri()
         webbrowser.open(uri)
     
     def format_timestamps_affichage(self):
         # Passer de "YY-MM-DD HH:MM:SS.ssssss" à "HH:MM:SS.ss"
-        for ts in self.timestamps:
-            self.timestamps_affichage.append(ts.split(" ")[1][:-4])
+        self.timestamps_affichage = [ts.split(" ")[1][:12] for ts in self.timestamps]
 
         # Passer de "HH:MM:SS.ss" à "ssssss.ss" pour le premier timestamp
-        hhmmss0 = self.timestamps_affichage[0].split(':')
-        ts_0 = float(hhmmss0[0])*3600 + float(hhmmss0[1])*60 + float(hhmmss0[2])
+        ts_0 = sum([float(t) * 60 ** i for i, t in enumerate(self.timestamps_affichage[0].split(':')[::-1])])
 
         # Faire la différence entre les timestamps pour avoir le temps écoulé en format "ssssss.ss"
-        for idx, ts in enumerate(self.timestamps_affichage):
-            hhmmss = ts.split(':')
-            ts_i = float(hhmmss[0])*3600 + float(hhmmss[1])*60 + float(hhmmss[2])
-            self.timestamps_affichage[idx] = round(ts_i - ts_0, 2)
-    
-    def check_valid(self, beacon_data):
-        return beacon_data['dist'] != None
+        self.timestamps_affichage = [round(sum([float(t) * 60 ** i for i, t in enumerate(ts.split(':')[::-1])]) - ts_0, 2) for ts in self.timestamps_affichage]
 
     def reset(self):
+        self.stats_figures = []
         self.timestamps_affichage = []
-
         self.timestamps = []
         self.positionsX = []
         self.positionsY = []
         self.errors = []
-
-        self.B1_dist = []
-        self.B1_rssi = []
-        self.B2_dist = []
-        self.B2_rssi = []
-        self.B3_dist = []
-        self.B3_rssi = []
-        self.B4_dist = []
-        self.B4_rssi = []
-        self.B5_dist = []
-        self.B5_rssi = []
-        self.B6_dist = []
-        self.B6_rssi = []
+        self.beacons = {1: {"dist": [], "rssi": [], "rssi_kalman": []},
+                        2: {"dist": [], "rssi": [], "rssi_kalman": []},
+                        3: {"dist": [], "rssi": [], "rssi_kalman": []},
+                        4: {"dist": [], "rssi": [], "rssi_kalman": []},
+                        5: {"dist": [], "rssi": [], "rssi_kalman": []},
+                        6: {"dist": [], "rssi": [], "rssi_kalman": []}}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Comment utiliser le script: python StudyPlotter.py -e <nom_fichier_sans_extension>')
     parser.add_argument('-e', '--etude', type=str, help='Nom du fichier d\'étude à lire (sans son extension .json)')
     args = parser.parse_args()
 
-    # If no arguments were provided, show help
+    # Si aucun argument n'a été fourni, afficher l'aide
     if not args.etude:
         parser.print_help()
     else:    
