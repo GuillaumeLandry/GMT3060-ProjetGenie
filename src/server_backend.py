@@ -1,15 +1,20 @@
 
+import os
+import json
+import numpy as np
 from datetime import datetime
-from utils.beacon import Beacon, all_beacons
-from utils.points import get_used_points
+
 from easy_trilateration.model import *  
 from easy_trilateration.least_squares import easy_least_squares  
 from easy_trilateration.graph import *  
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 from plot_study import DataPlotter
-import json
-import os
+
+from utils.beacon import Beacon, all_beacons
+from utils.points import get_used_points
+from utils.particle_filter import particle_filter
+from utils.kalman_filter import KalmanFilter
 
 class Backend():
     def __init__(self):
@@ -31,7 +36,22 @@ class Backend():
         self.alert_flag = False
 
         # Constantes globales
-        self.POSITION_HISTORY_SIZE = 20
+        self.POSITION_HISTORY_SIZE = 6
+
+        # Filtres
+        
+        process_noise = 0.008 # Kalman -> Default : 0.008
+        measurement_noise = 0.1 # Kalman -> Default : 0.1
+        self.path_loss_exponent = 1.75 # RSSI_Dist -> =2 dans un environnement libre. Probablement plus haut en intérieur entre [2,4]
+        self.minimum_accepted_rssi = -64.0 # -64.0 est environ 7m, au-dessous les données ne font plus de sens
+
+        self.kalman1 = KalmanFilter(process_noise, measurement_noise)
+        self.kalman2 = KalmanFilter(process_noise, measurement_noise)
+        self.kalman3 = KalmanFilter(process_noise, measurement_noise)
+        self.kalman4 = KalmanFilter(process_noise, measurement_noise)
+        self.kalman5 = KalmanFilter(process_noise, measurement_noise)
+        self.kalman6 = KalmanFilter(process_noise, measurement_noise)
+        self.kalman_dist = KalmanFilter(process_noise, measurement_noise)
 
     def process_data(self, request):
         
@@ -43,22 +63,28 @@ class Backend():
         # on peut creer une classe générale pour beacons et écrire ça dans une-deux lignes, au besoin
         if bleDevice == self.b1.mac:
             print("Received 1 :", rssi) # Distance 3.70m
-            self.b1.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
+            rssi_kalman = str(self.kalman1.kalman_filter(float(rssi)))
+            self.b1.set_telemetry(timestamp, receiverDevice, rssi, rssi_kalman, self.calculate_distance_from_rssi(rssi_kalman))
         elif bleDevice == self.b2.mac:
             print("Received 2 :", rssi) # Distance 6.10m
-            self.b2.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
+            rssi_kalman = str(self.kalman2.kalman_filter(float(rssi)))
+            self.b2.set_telemetry(timestamp, receiverDevice, rssi, rssi_kalman, self.calculate_distance_from_rssi(rssi_kalman))
         elif bleDevice == self.b3.mac:
             print("Received 3 :", rssi) # Distance 5.00m
-            self.b3.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
+            rssi_kalman = str(self.kalman3.kalman_filter(float(rssi)))
+            self.b3.set_telemetry(timestamp, receiverDevice, rssi, rssi_kalman, self.calculate_distance_from_rssi(rssi_kalman))
         elif bleDevice == self.b4.mac:
             print("Received 4 :", rssi) # Distance 4.50m
-            self.b4.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
+            rssi_kalman = str(self.kalman4.kalman_filter(float(rssi)))
+            self.b4.set_telemetry(timestamp, receiverDevice, rssi, rssi_kalman, self.calculate_distance_from_rssi(rssi_kalman))
         elif bleDevice == self.b5.mac:
             print("Received 5 :", rssi) # Distance 6.40m
-            self.b5.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
+            rssi_kalman = str(self.kalman5.kalman_filter(float(rssi)))
+            self.b5.set_telemetry(timestamp, receiverDevice, rssi, rssi_kalman, self.calculate_distance_from_rssi(rssi_kalman))
         elif bleDevice == self.b6.mac:
             print("Received 6 :", rssi) # Distance 3.50m
-            self.b6.set_telemetry(timestamp, receiverDevice, rssi, self.calculate_distance_from_rssi(rssi))
+            rssi_kalman = str(self.kalman6.kalman_filter(float(rssi)))
+            self.b6.set_telemetry(timestamp, receiverDevice, rssi, rssi_kalman, self.calculate_distance_from_rssi(rssi_kalman))
         
         return "received"
 
@@ -107,40 +133,77 @@ class Backend():
     def calculate_distance_from_rssi(self, rssi):
         # (https://iotandelectronics.wordpress.com/2016/10/07/how-to-calculate-distance-from-the-rssi-value-of-the-ble-beacon/)
         # https://community.estimote.com/hc/en-us/articles/201636913-What-are-Broadcasting-Power-RSSI-and-other-characteristics-of-a-beacon-s-signal-        
-        measured_power = -37 # Default -69 | (Voir fichier Excel pour explication de cette valeur)
-        path_loss_exponent = 4 # =2 dans un environnement libre. Probablement plus haut en intérieur entre [2,4]
-        return float(10**((measured_power - int(rssi)) / (10 * path_loss_exponent)))
+        measured_power = -48 # Default -69 | (Voir fichier Excel pour explication de cette valeur)
 
-    def essaye_calcul_position_parmi_les_listes_B1_B6(self):
-        now = datetime.now()
-        circles = []
+        if float(rssi) < self.minimum_accepted_rssi:
+            return None
 
+        return float(10**((measured_power - float(rssi)) / (10 * self.path_loss_exponent)))
+    
+    def calcule_position(self, kalman_filtering=False):
         if len(self.used_beacons) >= 3: # minimum qu'on a besoin 
+            now = datetime.now()
+            circles = []
+
             for beacon in self.used_beacons:
                 if beacon.distance != None:
                     delta_seconds = abs((beacon.timestamp - now).total_seconds() + 2.398774) # ce n'est pas bon
-                    if delta_seconds < 1:
-                        circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
-                    else:
-                        beacon.reset()
+                    #if delta_seconds < 1:
+                    #if kalman_filtering:
+                    #    beacon.rssi_kalman = str(self.kalman.kalman_filter(float(beacon.rssi)))
+
+                    circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
+                    #else:
+                    #    beacon.reset()
 
             if len(circles) >= 3:
                 position, _ = easy_least_squares(circles)
-                return position
+                return [position.center.x, position.center.y, position.radius]
             else: 
+                return None
+
+    def calcule_position_avec_filtrage(self, kalman_filtering=False):
+        if len(self.used_beacons) >= 3:
+            now = datetime.now()
+
+            rssi_values = []
+            beacons = []
+            for beacon in self.used_beacons:
+                if beacon.distance != None:
+                    delta_seconds = abs((beacon.timestamp - now).total_seconds() + 2.398774)
+                    if delta_seconds < 1:
+                        # Change les valeurs de RSSI avec les résultats du filtre de kalman (sera ainsi modifié dans les logs)
+                        if kalman_filtering == True:
+                            beacon.rssi_kalman = str(self.kalman.kalman_filter(float(beacon.rssi)))
+                            rssi_values.append(float(beacon.rssi_kalman))
+                        else:
+                            rssi_values.append(float(beacon.rssi))
+                        
+                        beacons.append((float(beacon.x), float(beacon.y)))
+                    else:
+                        beacon.reset()
+            
+            if len(rssi_values) > 0 and len(beacons) > 0:
+                print(rssi_values)
+                print(beacons)
+                position = particle_filter(measurements=rssi_values, beacons=beacons)
+                return [position[0], position[1], 0] # [x, y, erreur] (0=inconnu)
+            else:
                 return None
 
     def provide_data(self):
         if self.etude_running:
-            position = self.essaye_calcul_position_parmi_les_listes_B1_B6()
-            if position != None:
+            position = self.calcule_position(kalman_filtering=True)
+            # position = self.calcule_position_avec_filtrage(kalman_filtering=True)            
+            
+            if position is not None:
                 ## Process danger zone alert
-                if self.danger_zone.contains(Point(position.center.x,position.center.y)):
+                if self.danger_zone.contains(Point(position[0],position[1])):
                     self.alert_flag = True
                 
                 # Append data and save to disk
-                self.data_positions.append({'x':position.center.x, 'y':position.center.y})
-                self.log_position_to_disk(position)
+                self.data_positions.append({'x':position[0], 'y':position[1]})
+                self.log_to_disk(position)
 
         while len(self.data_positions) > self.POSITION_HISTORY_SIZE:
             self.data_positions.pop(0)
@@ -188,42 +251,48 @@ class Backend():
         else:
             return {'alert': ''}
 
-    def log_position_to_disk(self, position):
+    def log_to_disk(self, position):
         data = [{
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'),
             'position': {
-                'x': position.center.x,
-                'y': position.center.y,
-                'error': position.radius
+                'x': position[0],
+                'y': position[1],
+                'error': position[2]
             },
             'beacons': {
                 self.b1.name: {
                     'rssi':self.b1.rssi,
+                    'rssi_kalman':self.b1.rssi_kalman,
                     'dist':self.b1.distance,
                     'timestamp':self.b1.timestamp.strftime('%H:%M:%S.%f')[:-3]
                 },
                 self.b2.name: {
                     'rssi':self.b2.rssi,
+                    'rssi_kalman':self.b2.rssi_kalman,
                     'dist':self.b2.distance,
                     'timestamp':self.b2.timestamp.strftime('%H:%M:%S.%f')[:-3]
                 },
                 self.b3.name: {
                     'rssi':self.b3.rssi,
+                    'rssi_kalman':self.b3.rssi_kalman,
                     'dist':self.b3.distance,
                     'timestamp':self.b3.timestamp.strftime('%H:%M:%S.%f')[:-3]
                 },
                 self.b4.name: {
                     'rssi':self.b4.rssi,
+                    'rssi_kalman':self.b4.rssi_kalman,
                     'dist':self.b4.distance,
                     'timestamp':self.b4.timestamp.strftime('%H:%M:%S.%f')[:-3]
                 },
                 self.b5.name: {
                     'rssi':self.b5.rssi,
+                    'rssi_kalman':self.b5.rssi_kalman,
                     'dist':self.b5.distance,
                     'timestamp':self.b5.timestamp.strftime('%H:%M:%S.%f')[:-3]
                 },
                 self.b6.name: {
                     'rssi':self.b6.rssi,
+                    'rssi_kalman':self.b6.rssi_kalman,
                     'dist':self.b6.distance,
                     'timestamp':self.b6.timestamp.strftime('%H:%M:%S.%f')[:-3]
                 }

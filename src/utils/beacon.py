@@ -22,6 +22,7 @@ class Beacon:
         self.name = name
         self.mac = mac
         self.rssi = None
+        self.rssi_kalman = None
         self.distance = None
         self.timestamp = datetime.min
         
@@ -32,14 +33,16 @@ class Beacon:
     def myprint(self):
         return f"beacon {self.name}, {self.mac}_______________________{self.distance}"
 
-    def set_telemetry(self, timestamp, receiverDevice, rssi, distance):
+    def set_telemetry(self, timestamp, receiverDevice, rssi, rssi_kalman, distance):
         self.timestamp = format_timestamp(timestamp)
         self.receiverDevice = receiverDevice
         self.rssi = rssi
+        self.rssi_kalman = rssi_kalman
         self.distance = distance
 
     def reset(self):
         self.rssi = None
+        self.rssi_kalman = None
         self.distance = None
         self.timestamp = datetime.min
         self.receiverDevice = None

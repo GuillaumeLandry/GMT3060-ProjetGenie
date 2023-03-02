@@ -21,16 +21,27 @@ class DataPlotter:
         # Données des balises
         self.B1_dist = []
         self.B1_rssi = []
+        self.B1_rssi_kalman = []
+
         self.B2_dist = []
         self.B2_rssi = []
+        self.B2_rssi_kalman = []
+
         self.B3_dist = []
         self.B3_rssi = []
+        self.B3_rssi_kalman = []
+
         self.B4_dist = []
         self.B4_rssi = []
+        self.B4_rssi_kalman = []
+
         self.B5_dist = []
         self.B5_rssi = []
+        self.B5_rssi_kalman = []
+
         self.B6_dist = []
         self.B6_rssi = []
+        self.B6_rssi_kalman = []
 
     def load_data(self):
         self.reset()
@@ -47,49 +58,61 @@ class DataPlotter:
                 if self.check_valid(obj['beacons']['1']):
                     self.B1_dist.append(float(obj['beacons']['1']['dist']))
                     self.B1_rssi.append(float(obj['beacons']['1']['rssi']))
+                    self.B1_rssi_kalman.append(float(obj['beacons']['1']['rssi_kalman']))
                 else:
                     self.B1_dist.append(obj['beacons']['1']['dist'])
                     self.B1_rssi.append(obj['beacons']['1']['rssi'])
+                    self.B1_rssi_kalman.append(obj['beacons']['1']['rssi_kalman'])
 
                 # Balise 2
                 if self.check_valid(obj['beacons']['2']):
                     self.B2_dist.append(float(obj['beacons']['2']['dist']))
                     self.B2_rssi.append(float(obj['beacons']['2']['rssi']))
+                    self.B2_rssi_kalman.append(float(obj['beacons']['2']['rssi_kalman']))
                 else:
                     self.B2_dist.append(obj['beacons']['2']['dist'])
                     self.B2_rssi.append(obj['beacons']['2']['rssi'])
+                    self.B2_rssi_kalman.append(obj['beacons']['2']['rssi_kalman'])
                 
                 # Balise 3
                 if self.check_valid(obj['beacons']['3']):
                     self.B3_dist.append(float(obj['beacons']['3']['dist']))
                     self.B3_rssi.append(float(obj['beacons']['3']['rssi']))
+                    self.B3_rssi_kalman.append(float(obj['beacons']['3']['rssi_kalman']))
                 else:
                     self.B3_dist.append(obj['beacons']['3']['dist'])
                     self.B3_rssi.append(obj['beacons']['3']['rssi'])
+                    self.B3_rssi_kalman.append(obj['beacons']['3']['rssi_kalman'])
 
                 # Balise 4
                 if self.check_valid(obj['beacons']['4']):
                     self.B4_dist.append(float(obj['beacons']['4']['dist']))
                     self.B4_rssi.append(float(obj['beacons']['4']['rssi']))
+                    self.B4_rssi_kalman.append(float(obj['beacons']['4']['rssi_kalman']))
                 else:
                     self.B4_dist.append(obj['beacons']['4']['dist'])
                     self.B4_rssi.append(obj['beacons']['4']['rssi'])
+                    self.B4_rssi_kalman.append(obj['beacons']['4']['rssi_kalman'])
 
                 # Balise 5
                 if self.check_valid(obj['beacons']['5']):
                     self.B5_dist.append(float(obj['beacons']['5']['dist']))
                     self.B5_rssi.append(float(obj['beacons']['5']['rssi']))
+                    self.B5_rssi_kalman.append(float(obj['beacons']['5']['rssi_kalman']))
                 else:
                     self.B5_dist.append(obj['beacons']['5']['dist'])
                     self.B5_rssi.append(obj['beacons']['5']['rssi'])
+                    self.B5_rssi_kalman.append(obj['beacons']['5']['rssi_kalman'])
                 
                 # Balise 6
                 if self.check_valid(obj['beacons']['6']):
                     self.B6_dist.append(float(obj['beacons']['6']['dist']))
                     self.B6_rssi.append(float(obj['beacons']['6']['rssi']))
+                    self.B6_rssi_kalman.append(float(obj['beacons']['6']['rssi_kalman']))
                 else:
                     self.B6_dist.append(obj['beacons']['6']['dist'])
                     self.B6_rssi.append(obj['beacons']['6']['rssi'])
+                    self.B6_rssi_kalman.append(obj['beacons']['6']['rssi_kalman'])
         
         self.format_timestamps_affichage()
                     
@@ -150,7 +173,27 @@ class DataPlotter:
             yaxis_title='Coordonnée Y (m)'
         )
 
-        return [figure_rssi, figure_dist, figure_erreur, figure_position]
+        # Kalman
+        B1_plot_rssi_kalman = go.Scatter(name="B1_kalman", x=self.timestamps_affichage,y=self.B1_rssi_kalman,mode='lines+markers')
+        B2_plot_rssi_kalman = go.Scatter(name="B2_kalman", x=self.timestamps_affichage,y=self.B2_rssi_kalman,mode='lines+markers',visible='legendonly')
+        B3_plot_rssi_kalman = go.Scatter(name="B3_kalman", x=self.timestamps_affichage,y=self.B3_rssi_kalman,mode='lines+markers',visible='legendonly')
+        B4_plot_rssi_kalman = go.Scatter(name="B4_kalman", x=self.timestamps_affichage,y=self.B4_rssi_kalman,mode='lines+markers',visible='legendonly')
+        B5_plot_rssi_kalman = go.Scatter(name="B5_kalman", x=self.timestamps_affichage,y=self.B5_rssi_kalman,mode='lines+markers',visible='legendonly')
+        B6_plot_rssi_kalman = go.Scatter(name="B6_kalman", x=self.timestamps_affichage,y=self.B6_rssi_kalman,mode='lines+markers',visible='legendonly')
+        figure_rssi_kalman = go.Figure(data=[B1_plot_rssi, B1_plot_rssi_kalman, 
+                                             B2_plot_rssi, B2_plot_rssi_kalman,
+                                             B3_plot_rssi, B3_plot_rssi_kalman,
+                                             B4_plot_rssi, B4_plot_rssi_kalman,
+                                             B5_plot_rssi, B5_plot_rssi_kalman,
+                                             B6_plot_rssi, B6_plot_rssi_kalman])
+        figure_rssi_kalman.update_layout(
+            title='RSSI Kalman',
+            title_x=0.5,
+            xaxis_title='Temps écoulé (s)',
+            yaxis_title='RSSI (dbm)'
+        )
+
+        return [figure_rssi, figure_rssi_kalman, figure_dist, figure_erreur, figure_position]
 
     def export_stats(self, figures):
         output_dir = f'./etudes/{self.etude_name}'
