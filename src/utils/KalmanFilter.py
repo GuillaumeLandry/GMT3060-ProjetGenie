@@ -38,7 +38,7 @@ class KalmanFilter:
         self.R = R
         self.Q = Q
 
-    def kalman_filter(self, measurement):
+    def filter(self, measurement):
         """
         Filters a measurement
         :param measurement: The measurement value to be filtered

@@ -1,12 +1,12 @@
+import logging
 from flask import Flask, request, render_template
 from flask_cors import CORS, cross_origin
-import logging
-import server_backend as server_backend
-from plot_study import DataPlotter
+
+from LocationServer import LocationServer
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
-backend = server_backend.Backend()
+backend = LocationServer()
 
 @app.route("/")
 def render():

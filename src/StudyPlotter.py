@@ -6,10 +6,11 @@ import pathlib, webbrowser
 import plotly.graph_objects as go
 import plotly.io as pio
 
-class DataPlotter:
+class StudyPlotter:
     def __init__(self, etude_name):
         # Nom de l'étude à analyser
         self.etude_name = etude_name
+        self.stats_figures = []
 
         # Données de l'étude
         self.timestamps_affichage = []
@@ -42,8 +43,13 @@ class DataPlotter:
         self.B6_dist = []
         self.B6_rssi = []
         self.B6_rssi_kalman = []
+                    
+    def process_stats(self):
+        self.load_study()
+        self.create_stats()
+        self.export_stats()
 
-    def load_data(self):
+    def load_study(self):
         self.reset()
         with open(f'./etudes/{self.etude_name}/{self.etude_name}.json', 'r') as f:
             for line in f:
@@ -115,14 +121,8 @@ class DataPlotter:
                     self.B6_rssi_kalman.append(obj['beacons']['6']['rssi_kalman'])
         
         self.format_timestamps_affichage()
-                    
-    def create_and_export_stats(self):
-        self.load_data()
-        figures = self.create_stats()
-        self.export_stats(figures)
 
     def create_stats(self):
-
         # RSSI
         B1_plot_rssi = go.Scatter(name="B1", x=self.timestamps_affichage,y=self.B1_rssi,mode='lines+markers')
         B2_plot_rssi = go.Scatter(name="B2", x=self.timestamps_affichage,y=self.B2_rssi,mode='lines+markers',visible='legendonly')
@@ -193,9 +193,9 @@ class DataPlotter:
             yaxis_title='RSSI (dbm)'
         )
 
-        return [figure_rssi, figure_rssi_kalman, figure_dist, figure_erreur, figure_position]
+        self.stats_figures = [figure_rssi, figure_rssi_kalman, figure_dist, figure_erreur, figure_position]
 
-    def export_stats(self, figures):
+    def export_stats(self):
         output_dir = f'./etudes/{self.etude_name}'
         
         if not os.path.exists(output_dir):
@@ -208,10 +208,10 @@ class DataPlotter:
                     f'Debut : {self.timestamps[0][:-7]}<br>'
                     f'Fin   : {self.timestamps[-1][:-7]}<br>'
                     f'Duree : {self.timestamps_affichage[-1]} s</h2></div>')
-            f.write(figures[0].to_html(include_plotlyjs='cdn'))
-            pio.write_image(figures[0], file=f'{output_dir}/{self.etude_name}_{figures[0].layout.title.text}.png', scale=4)
+            f.write(self.stats_figures[0].to_html(include_plotlyjs='cdn'))
+            pio.write_image(self.stats_figures[0], file=f'{output_dir}/{self.etude_name}_{self.stats_figures[0].layout.title.text}.png', scale=4)
             
-            for fig in figures[1:]:
+            for fig in self.stats_figures[1:]:
                 f.write(fig.to_html(full_html=False, include_plotlyjs=False))
                 pio.write_image(fig, file=f'{output_dir}/{self.etude_name}_{fig.layout.title.text}.png', scale=4)
             
@@ -258,7 +258,7 @@ class DataPlotter:
         self.B6_rssi = []
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Comment utiliser le script: python plot_study.py -e <nom_fichier_sans_extension>')
+    parser = argparse.ArgumentParser(description='Comment utiliser le script: python StudyPlotter.py -e <nom_fichier_sans_extension>')
     parser.add_argument('-e', '--etude', type=str, help='Nom du fichier d\'étude à lire (sans son extension .json)')
     args = parser.parse_args()
 
@@ -266,6 +266,6 @@ if __name__ == "__main__":
     if not args.etude:
         parser.print_help()
     else:    
-        plotter = DataPlotter(args.etude)
-        plotter.create_and_export_stats()
+        plotter = StudyPlotter(args.etude)
+        plotter.process_stats()
 

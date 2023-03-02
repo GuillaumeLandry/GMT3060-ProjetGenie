@@ -10,40 +10,29 @@
   </head>
   <body style="margin: 2%">
     <h1>Tableau de bord</h1>
-    <!--Paramètres d'étude-->
+
+    <!--Section paramètres d'étude-->
     <div id="params-section-only-on-web">
       <hr>
       <h2>Paramètres de l'étude</h2>
       <form class="pure-form">
         <fieldset>
           <div id="etude-params">
-            <label for="B1">B1</label>
-            <!-- <input type="checkbox" id="B1" name="B1" value="true"> -->
+            <label for="B1">B1 : </label>
             <input type="text" id="B1" name="B1">
-            <!-- <select id="B1-select"></select><br> -->
-            <label for="B2">B2</label>
+            <label for="B2">B2 : </label>
             <input type="text" id="B2" name="B2">
-            <!-- <input type="checkbox" id="B2" name="B2" value="true"> -->
-            <!-- <select id="B2-select"></select><br> -->
-            <label for="B3">B3</label>
+            <label for="B3">B3 : </label>
             <input type="text" id="B3" name="B3"><br>
-            <!-- <input type="checkbox" id="B3" name="B3" value="true"> -->
-            <!-- <select id="B3-select"></select><br> -->
-            <label for="B4">B4</label>
+            <label for="B4">B4 : </label>
             <input type="text" id="B4" name="B5" >
-            <!-- <input type="checkbox" id="B4" name="B4" value="true"> -->
-            <!-- <select id="B4-select"></select><br> -->
-            <label for="B5">B5</label>
+            <label for="B5">B5 : </label>
             <input type="text" id="B5" name="B5" >
-            <!-- <input type="checkbox" id="B5" name="B5" value="true"> -->
-            <!-- <select id="B5-select"></select><br> -->
-            <label for="B6">B6</label>
+            <label for="B6">B6 : </label>
             <input type="text" id="B6" name="B6" >
-            <!-- <input type="checkbox" id="B6" name="B6" value="true"> -->
-            <!-- <select id="B6-select"></select><br> -->
 
             <br>
-            Étude: <input type="text" id="etude-name" name="etude-name" placeholder="Nom de l'étude à enregistrer"><br><br>
+            Étude : <input type="text" id="etude-name" name="etude-name" placeholder="Nom de l'étude à enregistrer"><br><br>
             <button type="button" class="pure-button" style="color: white; background: rgb(28, 184, 65);" id="etude-start" onclick="etude_start()">Démarrer l'étude</button>
           </div>
           <button type="button" class="pure-button" style="color: white; background: rgb(202, 60, 60);" id="etude-stop" onclick="etude_stop()">Arrêter l'étude</button>
@@ -52,6 +41,7 @@
         </fieldset>
       </form>
     </div>
+
     <!--Cache les options de paramétrages lorsqu'ouvert sur l'application Android (On ne veut pouvoir lancer des études que sur l'ordinateur de contrôle)-->
     <script>
       var isWebView = (navigator.userAgent.includes("AndroidReceiver"));
@@ -60,7 +50,7 @@
       }
     </script>
 
-    <!--Graphique des positions de l'utilisateur-->
+    <!--Section graphique des positions de l'utilisateur-->
     <hr>
     <h2>Position de l'utilisateur</h2>
     <h4 id="etude-running" style="color:red; display: none;">-- Enregistrement de l'étude en cours --</h4>

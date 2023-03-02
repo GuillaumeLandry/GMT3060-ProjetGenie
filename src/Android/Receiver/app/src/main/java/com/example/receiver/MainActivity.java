@@ -98,65 +98,48 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             BluetoothDevice device = result.getDevice();
-            String bleDevice = device.getAddress();
 
-            String b1 = "CA:F4:06:34:9C:31";
-            String b2 = "D9:27:C2:C1:22:38";
-            String b3 = "CC:B9:16:CD:6F:2F";
-            String b4 = "F6:C1:78:1C:4F:2D";
-            String b5 = "EB:76:88:9B:81:63";
-            String b6 = "FD:D0:C6:19:B1:E9";
+            // Send data to server
+            RequestBody formbody
+                    = new FormBody.Builder()
+                    .add("Timestamp", String.valueOf(Calendar.getInstance().getTimeInMillis()))
+                    .add("ReceiverDevice", Build.MODEL + " (" + Build.ID + ")")
+                    .add("BLEDevice", device.getAdress())
+                    .add("RSSI", String.valueOf(result.getRssi()))
+                    .build();
+            Request request = new Request.Builder().url(getURL() + "/ble")
+                    .post(formbody)
+                    .build();
 
-            if (
-                Objects.equals(bleDevice, b1) ||
-                Objects.equals(bleDevice, b2) ||
-                Objects.equals(bleDevice, b3) ||
-                Objects.equals(bleDevice, b4) ||
-                Objects.equals(bleDevice, b5) ||
-                Objects.equals(bleDevice, b6))
-            {
-                // Send data to server
-                RequestBody formbody
-                        = new FormBody.Builder()
-                        .add("Timestamp", String.valueOf(Calendar.getInstance().getTimeInMillis()))
-                        .add("ReceiverDevice", Build.MODEL + " (" + Build.ID + ")")
-                        .add("BLEDevice", bleDevice)
-                        .add("RSSI", String.valueOf(result.getRssi()))
-                        .build();
-                Request request = new Request.Builder().url(getURL() + "/ble")
-                        .post(formbody)
-                        .build();
-
-                okHttpClient.newCall(request).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(
-                        @NotNull Call call,
-                        @NotNull IOException e) {
-                            /*
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(getApplicationContext(), "server down", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                            */
-                    }
-
-                    @Override
-                    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+            okHttpClient.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(
+                    @NotNull Call call,
+                    @NotNull IOException e) {
                         /*
-                        if (response.body().string().equals("received")) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(getApplicationContext(), "data received", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        }
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(), "server down", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                         */
+                }
+
+                @Override
+                public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                    /*
+                    if (response.body().string().equals("received")) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(), "data received", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
-                });
-            }
+                    */
+                }
+            });
         }
     };
 

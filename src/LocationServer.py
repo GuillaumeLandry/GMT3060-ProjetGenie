@@ -1,7 +1,6 @@
 
 import os
 import json
-import numpy as np
 from datetime import datetime
 
 from easy_trilateration.model import *  
@@ -9,22 +8,22 @@ from easy_trilateration.least_squares import easy_least_squares
 from easy_trilateration.graph import *  
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
-from plot_study import DataPlotter
 
-from utils.beacon import Beacon, all_beacons
-from utils.points import get_used_points
-from utils.particle_filter import particle_filter
-from utils.kalman_filter import KalmanFilter
+from utils.Beacon import Beacon
+from utils.BeaconLocation import BeaconLocation
+from utils.ParticleFilter import ParticleFilter
+from utils.KalmanFilter import KalmanFilter
+from StudyPlotter import StudyPlotter
 
-class Backend():
+class LocationServer():
     def __init__(self):
         # Beacons disponibles
-        self.b1 = Beacon(all_beacons[0]['name'], all_beacons[0]['mac'])
-        self.b2 = Beacon(all_beacons[1]['name'], all_beacons[1]['mac'])
-        self.b3 = Beacon(all_beacons[2]['name'], all_beacons[2]['mac'])
-        self.b4 = Beacon(all_beacons[3]['name'], all_beacons[3]['mac'])
-        self.b5 = Beacon(all_beacons[4]['name'], all_beacons[4]['mac'])
-        self.b6 = Beacon(all_beacons[5]['name'], all_beacons[5]['mac'])
+        self.b1 = Beacon(1, 'CA:F4:06:34:9C:31')
+        self.b2 = Beacon(2, 'D9:27:C2:C1:22:38')
+        self.b3 = Beacon(3, 'CC:B9:16:CD:6F:2F')
+        self.b4 = Beacon(4, 'F6:C1:78:1C:4F:2D')
+        self.b5 = Beacon(5, 'EB:76:88:9B:81:63')
+        self.b6 = Beacon(6, 'FD:D0:C6:19:B1:E9')
         
         # Listes et autres structures
         self.used_beacons = []
@@ -39,7 +38,6 @@ class Backend():
         self.POSITION_HISTORY_SIZE = 6
 
         # Filtres
-        
         process_noise = 0.008 # Kalman -> Default : 0.008
         measurement_noise = 0.1 # Kalman -> Default : 0.1
         self.path_loss_exponent = 1.75 # RSSI_Dist -> =2 dans un environnement libre. Probablement plus haut en intérieur entre [2,4]
@@ -52,9 +50,9 @@ class Backend():
         self.kalman5 = KalmanFilter(process_noise, measurement_noise)
         self.kalman6 = KalmanFilter(process_noise, measurement_noise)
         self.kalman_dist = KalmanFilter(process_noise, measurement_noise)
+        self.particle_filter = ParticleFilter()
 
     def process_data(self, request):
-        
         timestamp = request.form["Timestamp"]
         receiverDevice = request.form["ReceiverDevice"]
         bleDevice = request.form["BLEDevice"]
@@ -62,34 +60,42 @@ class Backend():
 
         # on peut creer une classe générale pour beacons et écrire ça dans une-deux lignes, au besoin
         if bleDevice == self.b1.mac:
-            print("Received 1 :", rssi) # Distance 3.70m
-            rssi_kalman = str(self.kalman1.kalman_filter(float(rssi)))
+            print("Received 1 :", rssi)
+            rssi_kalman = str(self.kalman1.filter(float(rssi)))
             self.b1.set_telemetry(timestamp, receiverDevice, rssi, rssi_kalman, self.calculate_distance_from_rssi(rssi_kalman))
         elif bleDevice == self.b2.mac:
-            print("Received 2 :", rssi) # Distance 6.10m
-            rssi_kalman = str(self.kalman2.kalman_filter(float(rssi)))
+            print("Received 2 :", rssi)
+            rssi_kalman = str(self.kalman2.filter(float(rssi)))
             self.b2.set_telemetry(timestamp, receiverDevice, rssi, rssi_kalman, self.calculate_distance_from_rssi(rssi_kalman))
         elif bleDevice == self.b3.mac:
-            print("Received 3 :", rssi) # Distance 5.00m
-            rssi_kalman = str(self.kalman3.kalman_filter(float(rssi)))
+            print("Received 3 :", rssi)
+            rssi_kalman = str(self.kalman3.filter(float(rssi)))
             self.b3.set_telemetry(timestamp, receiverDevice, rssi, rssi_kalman, self.calculate_distance_from_rssi(rssi_kalman))
         elif bleDevice == self.b4.mac:
-            print("Received 4 :", rssi) # Distance 4.50m
-            rssi_kalman = str(self.kalman4.kalman_filter(float(rssi)))
+            print("Received 4 :", rssi)
+            rssi_kalman = str(self.kalman4.filter(float(rssi)))
             self.b4.set_telemetry(timestamp, receiverDevice, rssi, rssi_kalman, self.calculate_distance_from_rssi(rssi_kalman))
         elif bleDevice == self.b5.mac:
-            print("Received 5 :", rssi) # Distance 6.40m
-            rssi_kalman = str(self.kalman5.kalman_filter(float(rssi)))
+            print("Received 5 :", rssi)
+            rssi_kalman = str(self.kalman5.filter(float(rssi)))
             self.b5.set_telemetry(timestamp, receiverDevice, rssi, rssi_kalman, self.calculate_distance_from_rssi(rssi_kalman))
         elif bleDevice == self.b6.mac:
-            print("Received 6 :", rssi) # Distance 3.50m
-            rssi_kalman = str(self.kalman6.kalman_filter(float(rssi)))
+            print("Received 6 :", rssi)
+            rssi_kalman = str(self.kalman6.filter(float(rssi)))
             self.b6.set_telemetry(timestamp, receiverDevice, rssi, rssi_kalman, self.calculate_distance_from_rssi(rssi_kalman))
         
         return "received"
 
-    def update_params_etude(self, request):
+    def get_used_beacon_locations(self, dict_elements):
+        used_beacon_locations = []
+        with open('./cartographies/carte_original.txt', 'r') as file:
+            for line in file:
+                name, x, y, z = line.strip().split(',')
+                if name in dict_elements:
+                    used_beacon_locations.append(BeaconLocation(name, x, y, z))
+        return used_beacon_locations
 
+    def update_params_etude(self, request):
         new_params = request['params']
 
         if new_params["filename"] == "":
@@ -100,26 +106,26 @@ class Backend():
 
         else:
             print(f'\nParamètres mis à jour : {new_params}\nEnregistrement de l\'étude en cours ...\n')
-            points = get_used_points(new_params.values())
+            beacon_locations = self.get_used_beacon_locations(new_params.values())
             
-            for point in points:
-                if new_params["B1"] == point.name:
-                    self.b1.set_beacon_on_point(point)
+            for location in beacon_locations:
+                if new_params["B1"] == location.name:
+                    self.b1.set_beacon_on_location(location)
                     self.used_beacons.append(self.b1)
-                elif new_params["B2"] == point.name:
-                    self.b2.set_beacon_on_point(point)
+                elif new_params["B2"] == location.name:
+                    self.b2.set_beacon_on_location(location)
                     self.used_beacons.append(self.b2)
-                elif new_params["B3"] == point.name:
-                    self.b3.set_beacon_on_point(point)
+                elif new_params["B3"] == location.name:
+                    self.b3.set_beacon_on_location(location)
                     self.used_beacons.append(self.b3)
-                elif new_params["B4"] == point.name:
-                    self.b4.set_beacon_on_point(point)
+                elif new_params["B4"] == location.name:
+                    self.b4.set_beacon_on_location(location)
                     self.used_beacons.append(self.b4)
-                elif new_params["B5"] == point.name:
-                    self.b5.set_beacon_on_point(point)
+                elif new_params["B5"] == location.name:
+                    self.b5.set_beacon_on_location(location)
                     self.used_beacons.append(self.b5)
-                elif new_params["B6"] == point.name:
-                    self.b6.set_beacon_on_point(point)
+                elif new_params["B6"] == location.name:
+                    self.b6.set_beacon_on_location(location)
                     self.used_beacons.append(self.b6)
                 else:
                     pass
@@ -184,9 +190,7 @@ class Backend():
                         beacon.reset()
             
             if len(rssi_values) > 0 and len(beacons) > 0:
-                print(rssi_values)
-                print(beacons)
-                position = particle_filter(measurements=rssi_values, beacons=beacons)
+                position = self.particle_filter.filter(measurements=rssi_values, beacons=beacons)
                 return [position[0], position[1], 0] # [x, y, erreur] (0=inconnu)
             else:
                 return None
@@ -309,8 +313,8 @@ class Backend():
 
     def plot_study(self, request):
         try:
-            plotter = DataPlotter(request['params']['filename'])
-            plotter.create_and_export_stats()
+            plotter = StudyPlotter(request['params']['filename'])
+            plotter.process_stats()
             return "exporté"
         except:
             return "erreur"
