@@ -13,7 +13,7 @@ from utils.Beacon import Beacon
 from utils.BeaconLocation import BeaconLocation
 from utils.ParticleFilter import ParticleFilter
 from utils.KalmanFilter import KalmanFilter
-from StudyPlotter import StudyPlotter
+from utils.StudyPlotter import StudyPlotter
 
 class LocationServer():
     def __init__(self):
@@ -314,7 +314,7 @@ class LocationServer():
     def plot_study(self, request):
         try:
             plotter = StudyPlotter(request['params']['filename'])
-            plotter.process_stats()
+            plotter.process_plots()
             return "exporté"
         except:
             return "erreur"

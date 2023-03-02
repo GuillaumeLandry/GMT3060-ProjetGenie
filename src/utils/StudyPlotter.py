@@ -10,6 +10,7 @@ class StudyPlotter:
     def __init__(self, etude_name):
         # Nom de l'étude à analyser
         self.etude_name = etude_name
+        self.etude_directory = ''
         self.stats_figures = []
 
         # Données de l'étude
@@ -44,14 +45,25 @@ class StudyPlotter:
         self.B6_rssi = []
         self.B6_rssi_kalman = []
                     
-    def process_stats(self):
+    def process_plots(self):
         self.load_study()
-        self.create_stats()
-        self.export_stats()
+        self.create_plots()
+        self.export_plots()
 
     def load_study(self):
         self.reset()
-        with open(f'./etudes/{self.etude_name}/{self.etude_name}.json', 'r') as f:
+
+        # Détermine le chemin relatif à utiliser pour trouver l'étude
+        if os.path.exists(f'./etudes/{self.etude_name}/{self.etude_name}.json'):
+            self.etude_directory = f'./etudes/{self.etude_name}'
+        elif os.path.exists(f'../etudes/{self.etude_name}/{self.etude_name}.json'):
+            self.etude_directory = f'../etudes/{self.etude_name}'
+        else:
+            print("Aucune étude trouvée. Vérifier le nom de l'étude et/ou la position du fichier StudyPlotter.py")
+            return
+
+        # Charge les données dans les différents attributs de la classe
+        with open(f'{self.etude_directory}/{self.etude_name}.json', 'r') as f:
             for line in f:
                 obj = json.loads(line)[0]
 
@@ -122,7 +134,7 @@ class StudyPlotter:
         
         self.format_timestamps_affichage()
 
-    def create_stats(self):
+    def create_plots(self):
         # RSSI
         B1_plot_rssi = go.Scatter(name="B1", x=self.timestamps_affichage,y=self.B1_rssi,mode='lines+markers')
         B2_plot_rssi = go.Scatter(name="B2", x=self.timestamps_affichage,y=self.B2_rssi,mode='lines+markers',visible='legendonly')
@@ -195,13 +207,8 @@ class StudyPlotter:
 
         self.stats_figures = [figure_rssi, figure_rssi_kalman, figure_dist, figure_erreur, figure_position]
 
-    def export_stats(self):
-        output_dir = f'./etudes/{self.etude_name}'
-        
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-        with open(f'{output_dir}/{self.etude_name}.html', 'w') as f:
+    def export_plots(self):
+        with open(f'{self.etude_directory}/{self.etude_name}.html', 'w') as f:
             f.write(f'<h1 style="text-align: center;">Donnees de telemetrie et de traitements<br></h1>'
                     f'<h2 style="text-align: center; justify"><div style="display: inline-block; text-align: left;">'
                     f'Etude : {self.etude_name}<br>'
@@ -209,13 +216,13 @@ class StudyPlotter:
                     f'Fin   : {self.timestamps[-1][:-7]}<br>'
                     f'Duree : {self.timestamps_affichage[-1]} s</h2></div>')
             f.write(self.stats_figures[0].to_html(include_plotlyjs='cdn'))
-            pio.write_image(self.stats_figures[0], file=f'{output_dir}/{self.etude_name}_{self.stats_figures[0].layout.title.text}.png', scale=4)
+            pio.write_image(self.stats_figures[0], file=f'{self.etude_directory}/{self.etude_name}_{self.stats_figures[0].layout.title.text}.png', scale=4)
             
             for fig in self.stats_figures[1:]:
                 f.write(fig.to_html(full_html=False, include_plotlyjs=False))
-                pio.write_image(fig, file=f'{output_dir}/{self.etude_name}_{fig.layout.title.text}.png', scale=4)
+                pio.write_image(fig, file=f'{self.etude_directory}/{self.etude_name}_{fig.layout.title.text}.png', scale=4)
             
-        uri = pathlib.Path(f'{output_dir}/{self.etude_name}.html').absolute().as_uri()
+        uri = pathlib.Path(f'{self.etude_directory}/{self.etude_name}.html').absolute().as_uri()
         webbrowser.open(uri)
     
     def format_timestamps_affichage(self):
@@ -267,5 +274,5 @@ if __name__ == "__main__":
         parser.print_help()
     else:    
         plotter = StudyPlotter(args.etude)
-        plotter.process_stats()
+        plotter.process_plots()
 
