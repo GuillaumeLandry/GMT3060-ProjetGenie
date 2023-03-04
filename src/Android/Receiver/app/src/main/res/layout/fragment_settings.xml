@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="15dp"
         android:layout_marginEnd="15dp"
-        android:text="Serveur actuel :"
+        android:text="Adresse actuelle :"
         android:layout_centerVertical="true"
         android:textSize="25dp"/>
 

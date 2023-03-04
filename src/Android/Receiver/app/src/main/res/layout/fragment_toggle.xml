@@ -6,12 +6,26 @@
     tools:context=".fragments.Toggle"
     android:id="@+id/toggle_page">
 
+    <TextView
+        android:id="@+id/etat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:text="Transmission des données"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:textSize="20dp"
+        android:textStyle="bold" />
+
     <ToggleButton
         android:id="@+id/btn_toggle_ble"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/etat"
         android:layout_centerInParent="true"
         android:checked="false"
-        android:text="Récepteur BLE"/>
+        android:textOn="Actif"
+        android:textOff="Inactif"/>
 
 </RelativeLayout>
