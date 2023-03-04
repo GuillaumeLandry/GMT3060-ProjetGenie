@@ -8,6 +8,9 @@ Ce répertoire comprend toute l'architecture technologique développée dans le 
 1. Traiter les données pour calculer la distance récepteur-balises et la position du récepteur;
 1. Afficher en temps-réel les données et résultats dans une interface web;
 
+Voici le schéma de l'architecture développée:
+![Architecture](./assets/architecture.png)
+
 ## Utiliser le projet
 1. Cloner le répertoire du projet avec git
 ```bash
