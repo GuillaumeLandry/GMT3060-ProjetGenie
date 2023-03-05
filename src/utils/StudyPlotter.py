@@ -57,7 +57,7 @@ class StudyPlotter:
                 self.errors.append(float(obj['position']['error']))
 
                 for i in range(1, 7):
-                    if obj['beacons'][str(i)]['dist'] != None:
+                    if obj['beacons'][str(i)]['dist'] is not None:
                         self.beacons[i]['dist'].append(float(obj['beacons'][str(i)]['dist']))
                         self.beacons[i]['rssi'].append(float(obj['beacons'][str(i)]['rssi']))
                         self.beacons[i]['rssi_kalman'].append(float(obj['beacons'][str(i)]['rssi_kalman']))
@@ -69,7 +69,7 @@ class StudyPlotter:
         self.format_timestamps_affichage()
 
     def create_plots(self):
-        # RSSI
+        # RSSI Brut
         rssi_plots = []
         for i in range(1,7):
             rssi_plots.append(go.Scatter(name=f'B{i}', x=self.timestamps_affichage, y=self.beacons[i]['rssi'], mode='lines+markers'))
@@ -81,7 +81,7 @@ class StudyPlotter:
             yaxis_title='RSSI (dbm)'
         )
 
-        # Kalman
+        # RSSI Kalman
         kalman_plots = []
         for i in range(1,7):
             kalman_plots.append(go.Scatter(name=f'B{i}_kalman', x=self.timestamps_affichage, y=self.beacons[i]['rssi_kalman'], mode='lines+markers'))
@@ -93,7 +93,7 @@ class StudyPlotter:
             yaxis_title='RSSI (dbm)'
         )
 
-        # Combiné (Brut + Kalman)
+        # RSSI Combiné (Brut + Kalman)
         figure_combine = go.Figure(data=rssi_plots + kalman_plots)
         figure_combine.update_layout(
             title='RSSI Combine (Brut + Kalman)',

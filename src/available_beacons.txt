@@ -1,0 +1,7 @@
+name, id, description
+1,CA:F4:06:34:9C:31,Couleur/Proprietaire/etc.
+2,D9:27:C2:C1:22:38,Couleur/Proprietaire/etc.
+3,CC:B9:16:CD:6F:2F,Couleur/Proprietaire/etc.
+4,F6:C1:78:1C:4F:2D,Couleur/Proprietaire/etc.
+5,EB:76:88:9B:81:63,Couleur/Proprietaire/etc.
+6,FD:D0:C6:19:B1:E9,Couleur/Proprietaire/etc.

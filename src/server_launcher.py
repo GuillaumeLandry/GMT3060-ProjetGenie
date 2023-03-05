@@ -14,7 +14,7 @@ def render():
 
 @app.route("/ble", methods=["POST"])
 def ble():
-    return backend.process_data(request)
+    return backend.process_incoming_data(request)
 
 @app.route("/etude", methods=["POST"])
 @cross_origin()

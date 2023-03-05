@@ -1,9 +1,11 @@
 from datetime import datetime
 
 class Beacon:
-    def __init__(self, name, mac):
+    def __init__(self, name, uid, description="Aucune"):
         self.name = name
-        self.mac = mac
+        self.uid = uid
+        self.description = description
+
         self.rssi = None
         self.rssi_kalman = None
         self.distance = None
@@ -29,5 +31,8 @@ class Beacon:
         self.timestamp = datetime.min
 
     def __str__(self):
-        return f'Beacon {self.name} : {self.distance} m'
+        return (f'Nom de balise: {self.name}\n'
+                f'UID: {self.uid}\n'
+                f'Description: {self.description}\n'
+                f'Distance: {self.distance} m\n')
 

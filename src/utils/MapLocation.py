@@ -1,4 +1,4 @@
-class BeaconLocation:
+class MapLocation:
     def __init__(self, name, x, y, z):
         self.name = name
         self.x = x
