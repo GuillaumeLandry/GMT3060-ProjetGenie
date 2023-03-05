@@ -122,7 +122,7 @@ class LocationServer():
             print(f'\nParamètres mis à jour : {params_etude}\nEnregistrement de l\'étude en cours ...\n')
             return "ok"
     
-    def calcule_position_trilateration(self):
+    def calculate_position_trilateration(self):
         circles = []
         for _, (beacon, _) in self.available_beacons.items():
             if beacon.distance is not None:
@@ -136,7 +136,7 @@ class LocationServer():
 
     def provide_data(self):
         if self.ETUDE_RUNNING:
-            position = self.calcule_position_trilateration()
+            position = self.calculate_position_trilateration()
             
             if position is not None:
                 ## Process danger zone alert
