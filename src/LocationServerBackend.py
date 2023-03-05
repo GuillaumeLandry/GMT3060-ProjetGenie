@@ -16,7 +16,7 @@ from utils.ParticleFilter import ParticleFilter
 from utils.KalmanFilter import KalmanFilter
 from utils.StudyPlotter import StudyPlotter
 
-class LocationServer():
+class LocationServerBackend():
     def __init__(self):
         # Constantes globales
         self.POSITION_HISTORY_SIZE = 6      # Affichage -> Affiche les X dernières positions calculées sur la carte
@@ -103,10 +103,7 @@ class LocationServer():
         params_etude = request['params']
 
         if params_etude["filename"] == "":
-            self.etude_name = params_etude["filename"]
-            self.ETUDE_RUNNING = False
-            print('\nÉtude arrêtée.\n')
-            return "ok"
+            return self.stop_etude()
 
         else:            
             for _, (beacon, _) in self.available_beacons.items():
@@ -116,25 +113,22 @@ class LocationServer():
                 else:
                     beacon.reset()
 
-            self.etude_name = params_etude["filename"]
-            self.data_logger = DataLogger(self.etude_name, self.available_beacons)
-            self.ETUDE_RUNNING = True
-            print(f'\nParamètres mis à jour : {params_etude}\nEnregistrement de l\'étude en cours ...\n')
-            return "ok"
+            return self.start_etude(params_etude)
     
-    def calculate_position_trilateration(self):
-        circles = []
-        for _, (beacon, _) in self.available_beacons.items():
-            if beacon.distance is not None:
-                circles.append(Circle(beacon.x, beacon.y, beacon.distance))
+    def start_etude(self, params_etude):
+        self.etude_name = params_etude["filename"]
+        self.data_logger = DataLogger(self.etude_name, self.available_beacons)
+        self.ETUDE_RUNNING = True
+        print(f'\nParamètres mis à jour : {params_etude}\nEnregistrement de l\'étude en cours ...\n')
+        return "ok"
 
-        if len(circles) >= self.MIN_REQUIRED_CIRCLES_TRILATERATION:
-            position, _ = easy_least_squares(circles)
-            return [position.center.x, position.center.y, position.radius]
-        else: 
-            return None
+    def stop_etude(self):
+        self.etude_name = ""
+        self.ETUDE_RUNNING = False
+        print('\nÉtude arrêtée.\n')
+        return 'ok'
 
-    def provide_data(self):
+    def send_data_to_frontend_on_request(self):
         if self.ETUDE_RUNNING:
             position = self.calculate_position_trilateration()
             
@@ -152,6 +146,18 @@ class LocationServer():
 
         return self.data_positions
     
+    def calculate_position_trilateration(self):
+        circles = []
+        for _, (beacon, _) in self.available_beacons.items():
+            if beacon.distance is not None:
+                circles.append(Circle(beacon.x, beacon.y, beacon.distance))
+
+        if len(circles) >= self.MIN_REQUIRED_CIRCLES_TRILATERATION:
+            position, _ = easy_least_squares(circles)
+            return [position.center.x, position.center.y, position.radius]
+        else: 
+            return None
+
     def send_alert_flag(self):
         if self.ALERT_FLAG == True:
             self.ALERT_FLAG = False

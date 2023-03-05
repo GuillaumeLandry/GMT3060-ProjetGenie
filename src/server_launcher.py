@@ -2,11 +2,11 @@ import logging
 from flask import Flask, request, render_template
 from flask_cors import CORS, cross_origin
 
-from LocationServer import LocationServer
+from LocationServerBackend import LocationServerBackend
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
-backend = LocationServer()
+backend = LocationServerBackend()
 
 @app.route("/")
 def render():
@@ -19,7 +19,7 @@ def ble():
 @app.route("/etude", methods=["POST"])
 @cross_origin()
 def etude():
-    return backend.update_params_etude(request.json)
+    return backend.start_stop_update_etude(request.json)
 
 @app.route("/plot", methods=["POST"])
 def plot():
@@ -29,7 +29,7 @@ def plot():
 def provide():
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
-    return backend.provide_data()
+    return backend.send_data_to_frontend_on_request()
 
 @app.route("/map-lab", methods=["GET"])
 def map_lab():
