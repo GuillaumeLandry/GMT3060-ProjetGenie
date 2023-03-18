@@ -29,7 +29,7 @@ class StudyPlotter:
                         4: {"dist": [], "rssi": [], "rssi_kalman": []},
                         5: {"dist": [], "rssi": [], "rssi_kalman": []},
                         6: {"dist": [], "rssi": [], "rssi_kalman": []}}
-                    
+         
     def process_plots(self):
         # Toute la chaine de traitement pour produire les graphiques
         self.load_study()
@@ -182,7 +182,6 @@ class StudyPlotter:
 
         uri = pathlib.Path(f'{self.etude_directory}/{self.etude_name}.html').absolute().as_uri()
         webbrowser.open(uri)
-            
     
     def format_timestamps_affichage(self):
         # Passer de "YY-MM-DD HH:MM:SS.ssssss" à "HH:MM:SS.ss"
