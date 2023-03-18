@@ -3,10 +3,10 @@ import json
 from datetime import datetime
 
 class DataLogger:
-    def __init__(self, etude_name, available_beacons):
+    def __init__(self, etude_name, available_beacons, output_dir):
         self.etude_name = etude_name
         self.available_beacons = available_beacons
-        self.output_dir = f'../etudes/{etude_name}'
+        self.output_dir = output_dir
 
     def save_to_disk(self, position):
         data = {

@@ -19,7 +19,7 @@ def ble():
 @app.route("/etude", methods=["POST"])
 @cross_origin()
 def etude():
-    return backend.start_stop_update_etude(request.json)
+    return backend.update_params_etude(request.json)
 
 @app.route("/plot", methods=["POST"])
 def plot():

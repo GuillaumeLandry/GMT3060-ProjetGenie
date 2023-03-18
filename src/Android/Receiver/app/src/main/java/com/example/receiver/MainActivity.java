@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
         String[] permissions = {
                 android.Manifest.permission.BLUETOOTH_CONNECT,
                 android.Manifest.permission.BLUETOOTH_SCAN,
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
         };
 
         List<String> permissionsToRequest = new ArrayList<>();

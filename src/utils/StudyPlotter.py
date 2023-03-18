@@ -19,6 +19,8 @@ class StudyPlotter:
         self.positionsX = []
         self.positionsY = []
         self.errors = []
+        self.min_RSSI = float('inf')  # Initialise au float maximum disponible
+        self.max_RSSI = float('-inf') # Initialise au float minimum disponible
 
         # Données des balises
         self.beacons = {1: {"dist": [], "rssi": [], "rssi_kalman": []},
@@ -45,11 +47,11 @@ class StudyPlotter:
         else:
             print("Aucune étude trouvée. Vérifier le nom de l'étude et/ou la position du fichier StudyPlotter.py")
             return
-
+        
         # Charge les données dans les différents attributs de la classe
         with open(f'{self.etude_directory}/{self.etude_name}.json', 'r') as f:
             for line in f:
-                obj = json.loads(line)[0]
+                obj = json.loads(line)
 
                 self.timestamps.append(obj['timestamp'])
                 self.positionsX.append(obj['position']['x'])
@@ -57,15 +59,22 @@ class StudyPlotter:
                 self.errors.append(float(obj['position']['error']))
 
                 for i in range(1, 7):
+                    # S'il existe une distance calculée pour cette balise (donnée reçue)
                     if obj['beacons'][str(i)]['dist'] is not None:
                         self.beacons[i]['dist'].append(float(obj['beacons'][str(i)]['dist']))
                         self.beacons[i]['rssi'].append(float(obj['beacons'][str(i)]['rssi']))
                         self.beacons[i]['rssi_kalman'].append(float(obj['beacons'][str(i)]['rssi_kalman']))
+                        
+                        # Ajuste les valeurs de min et max RSSI pour ajuste l'échelle des graphiques sur l'axe des Y
+                        if (float(obj['beacons'][str(i)]['rssi']) < self.min_RSSI): self.min_RSSI = float(obj['beacons'][str(i)]['rssi'])
+                        if (float(obj['beacons'][str(i)]['rssi']) > self.max_RSSI): self.max_RSSI = float(obj['beacons'][str(i)]['rssi'])
+                    
+                    # Si aucune distance calculée (donnée non-reçue)
                     else:
                         self.beacons[i]['dist'].append(obj['beacons'][str(i)]['dist'])
                         self.beacons[i]['rssi'].append(obj['beacons'][str(i)]['rssi'])
                         self.beacons[i]['rssi_kalman'].append(obj['beacons'][str(i)]['rssi_kalman'])
-        
+                    
         self.format_timestamps_affichage()
 
     def create_plots(self):
@@ -78,7 +87,8 @@ class StudyPlotter:
             title='RSSI Brut',
             title_x=0.5,
             xaxis_title='Temps écoulé (s)',
-            yaxis_title='RSSI (dbm)'
+            yaxis_title='RSSI (dbm)',
+            yaxis_range=[self.min_RSSI, self.max_RSSI]
         )
 
         # RSSI Kalman
@@ -90,7 +100,8 @@ class StudyPlotter:
             title='RSSI Kalman',
             title_x=0.5,
             xaxis_title='Temps écoulé (s)',
-            yaxis_title='RSSI (dbm)'
+            yaxis_title='RSSI (dbm)',
+            yaxis_range=[self.min_RSSI, self.max_RSSI]
         )
 
         # RSSI Combiné (Brut + Kalman)
@@ -99,7 +110,8 @@ class StudyPlotter:
             title='RSSI Combine (Brut + Kalman)',
             title_x=0.5,
             xaxis_title='Temps écoulé (s)',
-            yaxis_title='RSSI (dbm)'
+            yaxis_title='RSSI (dbm)',
+            yaxis_range=[self.min_RSSI, self.max_RSSI]
         )
 
         # Distances
@@ -111,7 +123,7 @@ class StudyPlotter:
             title='Distances',
             title_x=0.5,
             xaxis_title='Temps écoulé (s)',
-            yaxis_title='Distances (m)'
+            yaxis_title='Distances (m)',
         )
 
         # Erreurs
@@ -121,7 +133,7 @@ class StudyPlotter:
             title='Erreurs',
             title_x=0.5,
             xaxis_title='Temps écoulé (s)',
-            yaxis_title='Erreurs (m)'
+            yaxis_title='Erreurs (m)',
         )
 
         # Positions
@@ -131,7 +143,7 @@ class StudyPlotter:
             title='Positions',
             title_x=0.5,
             xaxis_title='Coordonnée X (m)',
-            yaxis_title='Coordonnée Y (m)'
+            yaxis_title='Coordonnée Y (m)',
         )
 
         self.stats_figures = [figure_rssi, figure_kalman, figure_combine, figure_dist, figure_erreur, figure_position]
@@ -159,7 +171,10 @@ class StudyPlotter:
             for i, fig in enumerate(self.stats_figures):
                 f.write(f'<div class="plot-container">\n')
                 #f.write(f'<h2 style="text-align:center;">Graphique {i+1} - {fig.layout.title.text}</h2>\n')
+                # Ajouter chaque figure au document .html
                 f.write(fig.to_html(include_plotlyjs='cdn'))
+                # Exporter chaque figure comme .png
+                pio.write_image(fig, file=f'{self.etude_directory}/{self.etude_name}_{fig.layout.title.text}.png', scale=4)
                 f.write('</div>\n')
             f.write('</div>\n')
             f.write('</body>\n')
@@ -167,6 +182,7 @@ class StudyPlotter:
 
         uri = pathlib.Path(f'{self.etude_directory}/{self.etude_name}.html').absolute().as_uri()
         webbrowser.open(uri)
+            
     
     def format_timestamps_affichage(self):
         # Passer de "YY-MM-DD HH:MM:SS.ssssss" à "HH:MM:SS.ss"

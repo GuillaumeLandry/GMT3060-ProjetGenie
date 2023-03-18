@@ -6,6 +6,8 @@ class Beacon:
         self.uid = uid
         self.description = description
 
+        self.x = None
+        self.y = None
         self.rssi = None
         self.rssi_kalman = None
         self.distance = None

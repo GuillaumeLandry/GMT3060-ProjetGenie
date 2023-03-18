@@ -15,6 +15,7 @@ from utils.MapLocation import MapLocation
 from utils.ParticleFilter import ParticleFilter
 from utils.KalmanFilter import KalmanFilter
 from utils.StudyPlotter import StudyPlotter
+from utils.DataLogger import DataLogger
 
 class LocationServerBackend():
     def __init__(self):
@@ -117,7 +118,7 @@ class LocationServerBackend():
     
     def start_etude(self, params_etude):
         self.etude_name = params_etude["filename"]
-        self.data_logger = DataLogger(self.etude_name, self.available_beacons)
+        self.data_logger = DataLogger(self.etude_name, self.available_beacons, f'./etudes/{self.etude_name}')
         self.ETUDE_RUNNING = True
         print(f'\nParamètres mis à jour : {params_etude}\nEnregistrement de l\'étude en cours ...\n')
         return "ok"
@@ -150,9 +151,9 @@ class LocationServerBackend():
         circles = []
         for _, (beacon, _) in self.available_beacons.items():
             if beacon.distance is not None:
-                circles.append(Circle(beacon.x, beacon.y, beacon.distance))
+                circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
 
-        if len(circles) >= self.MIN_REQUIRED_CIRCLES_TRILATERATION:
+        if len(circles) >= self.MIN_REQUIRED_TRILATERATION:
             position, _ = easy_least_squares(circles)
             return [position.center.x, position.center.y, position.radius]
         else: 
