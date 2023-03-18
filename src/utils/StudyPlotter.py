@@ -19,8 +19,18 @@ class StudyPlotter:
         self.positionsX = []
         self.positionsY = []
         self.errors = []
+
+        # Variables utilisées dans la production des graphiques
+        self.mapX = []
+        self.mapY = []
+        self.dangerX = []
+        self.dangerY = []
+        self.groundTruthX = []
+        self.groundTruthY = []
         self.min_RSSI = float('inf')  # Initialise au float maximum disponible
         self.max_RSSI = float('-inf') # Initialise au float minimum disponible
+        self.min_dist = float('inf')  # Initialise au float maximum disponible
+        self.max_dist = float('-inf') # Initialise au float minimum disponible
 
         # Données des balises
         self.beacons = {1: {"dist": [], "rssi": [], "rssi_kalman": []},
@@ -34,7 +44,8 @@ class StudyPlotter:
         # Toute la chaine de traitement pour produire les graphiques
         self.load_study()
         self.create_plots()
-        self.export_plots()
+        self.export_telemetry()
+        self.export_trajectory()
 
     def load_study(self):
         self.reset()
@@ -42,13 +53,15 @@ class StudyPlotter:
         # Détermine le chemin relatif à utiliser pour trouver l'étude
         if os.path.exists(f'./etudes/{self.etude_name}/{self.etude_name}.json'):
             self.etude_directory = f'./etudes/{self.etude_name}'
+            self.carto_directory = f'./cartographies'
         elif os.path.exists(f'../etudes/{self.etude_name}/{self.etude_name}.json'):
             self.etude_directory = f'../etudes/{self.etude_name}'
+            self.carto_directory = f'../cartographies'
         else:
             print("Aucune étude trouvée. Vérifier le nom de l'étude et/ou la position du fichier StudyPlotter.py")
             return
         
-        # Charge les données dans les différents attributs de la classe
+        # Charge les données d'acquisition dans les différents attributs de la classe
         with open(f'{self.etude_directory}/{self.etude_name}.json', 'r') as f:
             for line in f:
                 obj = json.loads(line)
@@ -68,14 +81,42 @@ class StudyPlotter:
                         # Ajuste les valeurs de min et max RSSI pour ajuste l'échelle des graphiques sur l'axe des Y
                         if (float(obj['beacons'][str(i)]['rssi']) < self.min_RSSI): self.min_RSSI = float(obj['beacons'][str(i)]['rssi'])
                         if (float(obj['beacons'][str(i)]['rssi']) > self.max_RSSI): self.max_RSSI = float(obj['beacons'][str(i)]['rssi'])
+                        if (float(obj['beacons'][str(i)]['dist']) < self.min_dist): self.min_dist = float(obj['beacons'][str(i)]['dist'])
+                        if (float(obj['beacons'][str(i)]['dist']) > self.max_dist): self.max_dist = float(obj['beacons'][str(i)]['dist'])
                     
                     # Si aucune distance calculée (donnée non-reçue)
                     else:
                         self.beacons[i]['dist'].append(obj['beacons'][str(i)]['dist'])
                         self.beacons[i]['rssi'].append(obj['beacons'][str(i)]['rssi'])
                         self.beacons[i]['rssi_kalman'].append(obj['beacons'][str(i)]['rssi_kalman'])
-                    
+        
         self.format_timestamps_affichage()
+
+        # Charge la carte pour affichage dans le graphique de trajectoire
+        with open(f'{self.carto_directory}/carte_lab.txt', 'r') as f:
+            for line in f.readlines():
+                x, y, z = line.strip().split(",")[1:4]
+                self.mapX.append(float(x))
+                self.mapY.append(float(y))
+
+        # Charge la zone de danger pour affichage dans le graphique de trajectoire
+        with open(f'{self.carto_directory}/carte_danger.txt', 'r') as f:
+            for line in f.readlines():
+                x, y, z = line.strip().split(",")[1:4]
+                self.dangerX.append(float(x))
+                self.dangerY.append(float(y))
+
+        # Charge les données de la station-totale de cette étude
+        try:
+            with open(f'{self.etude_directory}/{self.etude_name}_Ground_Truth.txt', 'r') as f:
+                for line in f.readlines():
+                    x, y = line.strip().split(",")[0:2]
+                    self.groundTruthX.append(float(x))
+                    self.groundTruthY.append(float(y))
+        except:
+            # Crée un fichier vide si aucun n'existe (aucune donnée de station totale fournie)
+            with open(f'{self.etude_directory}/{self.etude_name}_Ground_Truth.txt', 'w') as f:
+                pass
 
     def create_plots(self):
         # RSSI Brut
@@ -124,10 +165,11 @@ class StudyPlotter:
             title_x=0.5,
             xaxis_title='Temps écoulé (s)',
             yaxis_title='Distances (m)',
+            yaxis_range=[self.min_dist, self.max_dist]
         )
 
         # Erreurs
-        plot_erreur = go.Scatter(name="Erreurs", x=self.timestamps_affichage,y=self.errors,mode='lines+markers')
+        plot_erreur = go.Scatter(name="Erreurs", x=self.timestamps_affichage, y=self.errors, mode='lines+markers')
         figure_erreur = go.Figure(data=[plot_erreur])
         figure_erreur.update_layout(
             title='Erreurs',
@@ -136,23 +178,28 @@ class StudyPlotter:
             yaxis_title='Erreurs (m)',
         )
 
-        # Positions
-        plot_positions = go.Scatter(name="Positions", x=self.positionsX,y=self.positionsY,mode='lines+markers')
-        figure_position = go.Figure(data=[plot_positions])
-        figure_position.update_layout(
-            title='Positions',
+        # Trajectoire
+        plot_map = go.Scatter(name="Fond de Carte", x=self.mapX, y=self.mapY, mode='lines+markers', line=dict(color='gray'))
+        plot_danger = go.Scatter(name="Danger", x=self.dangerX, y=self.dangerY, mode='lines+markers', line=dict(color='rgb(214, 39, 40)'))
+        plot_trajectory = go.Scatter(name="Trajectoire", x=self.positionsX, y=self.positionsY, mode='lines+markers', line=dict(color='rgb(31, 119, 180)'))
+        plot_ground_truth = go.Scatter(name="Station-Totale", x=self.groundTruthX, y=self.groundTruthY, mode='lines+markers', line=dict(color='rgb(44, 160, 44)'))
+        figure_trajectory = go.Figure(data=[plot_trajectory, plot_ground_truth, plot_map, plot_danger])
+        figure_trajectory.update_layout(
+            title='Trajectoire',
             title_x=0.5,
             xaxis_title='Coordonnée X (m)',
             yaxis_title='Coordonnée Y (m)',
+            xaxis_range=[min(self.mapY), max(self.mapY)],
+            yaxis_range=[min(self.mapY), max(self.mapY)]
         )
 
-        self.stats_figures = [figure_rssi, figure_kalman, figure_combine, figure_dist, figure_erreur, figure_position]
-
-    def export_plots(self):
-        with open(f'{self.etude_directory}/{self.etude_name}.html', 'w') as f: 
+        self.stats_figures = [figure_rssi, figure_kalman, figure_combine, figure_dist, figure_erreur, figure_trajectory]
+    
+    def export_telemetry(self):
+        with open(f'{self.etude_directory}/{self.etude_name}_Telemetrie.html', 'w') as f: 
             f.write('<html>\n')
             f.write('<head>\n')
-            f.write(f'<title>{self.etude_name}</title>\n')
+            f.write(f'<title>{self.etude_name}_Telemetrie</title>\n')
             f.write('<style>\n')
             f.write('body { font-family: Arial, Helvetica, sans-serif; }\n')
             f.write('h1 { text-align: center; font-size: 36px; margin-top: 50px; }\n')
@@ -169,20 +216,50 @@ class StudyPlotter:
             f.write('<hr class="separator">\n')
             f.write('<div class="container">\n')
             for i, fig in enumerate(self.stats_figures):
-                f.write(f'<div class="plot-container">\n')
-                #f.write(f'<h2 style="text-align:center;">Graphique {i+1} - {fig.layout.title.text}</h2>\n')
-                # Ajouter chaque figure au document .html
-                f.write(fig.to_html(include_plotlyjs='cdn'))
-                # Exporter chaque figure comme .png
-                pio.write_image(fig, file=f'{self.etude_directory}/{self.etude_name}_{fig.layout.title.text}.png', scale=4)
-                f.write('</div>\n')
+                if fig.layout.title.text != "Trajectoire":
+                    f.write(f'<div class="plot-container">\n')
+                    #f.write(f'<h2 style="text-align:center;">Graphique {i+1} - {fig.layout.title.text}</h2>\n')
+                    # Ajouter chaque figure au document .html
+                    f.write(fig.to_html(include_plotlyjs='cdn'))
+                    # Exporter chaque figure comme .png
+                    pio.write_image(fig, file=f'{self.etude_directory}/{self.etude_name}_{fig.layout.title.text}.png', scale=4)
+                    f.write('</div>\n')
             f.write('</div>\n')
             f.write('</body>\n')
             f.write('</html>\n')
 
-        uri = pathlib.Path(f'{self.etude_directory}/{self.etude_name}.html').absolute().as_uri()
+        uri = pathlib.Path(f'{self.etude_directory}/{self.etude_name}_Telemetrie.html').absolute().as_uri()
         webbrowser.open(uri)
-    
+
+    def export_trajectory(self):
+        with open(f'{self.etude_directory}/{self.etude_name}_Trajectoire.html', 'w') as f: 
+            f.write('<html>\n')
+            f.write('<head>\n')
+            f.write(f'<title>{self.etude_name}_Trajectoire</title>\n')
+            f.write('<style>\n')
+            f.write('body { font-family: Arial, Helvetica, sans-serif; }\n')
+            f.write('h1 { text-align: center; font-size: 36px; margin-top: 50px; }\n')
+            f.write('h2 { text-align: center; font-size: 24px; margin-top: 30px; }\n')
+            f.write('.container { display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 50px; }\n')
+            f.write('.plot-container { width: 48%; height: 500px; margin-bottom: 50px; }\n')
+            f.write('.separator { border-top: 2px solid black; margin: 50px 0; }\n')
+            f.write('</style>\n')
+            f.write('</head>\n')
+            f.write('<body>\n')
+            f.write(f'<h1>Trajectoire</h1>\n')
+            f.write(f'<h2>Etude : {self.etude_name}</h2>\n')
+            f.write(f'<h2>Debut : {self.timestamps[0][:-7]} | Fin : {self.timestamps[-1][:-7]} | Duree : {self.timestamps_affichage[-1]} s</h2>\n')
+            f.write('<hr class="separator">\n')
+            for i, fig in enumerate(self.stats_figures):
+                if fig.layout.title.text == "Trajectoire":
+                    f.write(fig.to_html(include_plotlyjs='cdn'))
+            f.write('</div>\n')
+            f.write('</body>\n')
+            f.write('</html>\n')
+
+        uri = pathlib.Path(f'{self.etude_directory}/{self.etude_name}_Trajectoire.html').absolute().as_uri()
+        webbrowser.open(uri)
+
     def format_timestamps_affichage(self):
         # Passer de "YY-MM-DD HH:MM:SS.ssssss" à "HH:MM:SS.ss"
         self.timestamps_affichage = [ts.split(" ")[1][:12] for ts in self.timestamps]

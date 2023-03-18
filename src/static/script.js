@@ -81,7 +81,7 @@ function etude_plot() {
         complete: function (response) {
 
             if (response.responseText == "erreur") {
-                alert("Vérifier le nom de l'étude. Il y a eu une erreur lors du calcul des statistiques.")
+                alert("Vérifier le nom de l'étude. Il y a eu une erreur lors du calcul ou de l'exportation des statistiques.")
             }
         }
     });
