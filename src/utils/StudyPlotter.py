@@ -110,7 +110,7 @@ class StudyPlotter:
         try:
             with open(f'{self.etude_directory}/{self.etude_name}_Ground_Truth.txt', 'r') as f:
                 for line in f.readlines():
-                    x, y = line.strip().split(",")[0:2]
+                    x, y = line.strip().split(",")[1:3]
                     self.groundTruthX.append(float(x))
                     self.groundTruthY.append(float(y))
         except:

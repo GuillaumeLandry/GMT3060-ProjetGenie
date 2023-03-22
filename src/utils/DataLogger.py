@@ -3,14 +3,19 @@ import json
 from datetime import datetime
 
 class DataLogger:
-    def __init__(self, etude_name, available_beacons, output_dir):
+    def __init__(self, etude_name, available_beacons, output_dir, description=""):
         self.etude_name = etude_name
         self.available_beacons = available_beacons
         self.output_dir = output_dir
+        self.description = description
 
-    def save_to_disk(self, position):
+    def save_to_disk(self, position, measured_power, path_loss_exponent):
         data = {
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'),
+            'etude_name': self.etude_name,
+            'description': self.description,
+            'cst_measured_power': measured_power,
+            'cst_path_loss_exponent': path_loss_exponent,
             'position': {
                 'x': position[0],
                 'y': position[1],

@@ -26,14 +26,15 @@ class LocationServerBackend():
         self.PROCESS_NOISE = 0.008          # Kalman -> Default : 0.008
         self.MEASUREMENT_NOISE = 0.1        # Kalman -> Default : 0.1
         
-        self.MEASURED_POWER = -48           # RSSI Dist -> Default -69 | (Voir fichier Excel pour explication de cette valeur)
-        self.PATH_LOSS_EXPONENT = 1.75      # RSSI_Dist -> =2 dans un environnement libre. Probablement plus haut en intérieur entre [2,4]
-        self.MIN_ACCEPTED_RSSI = -64.0      # RSSI_Dist -> -64.0 est environ 7m, au-dessous les données ne font plus de sens
+        self.MEASURED_POWER = -50           # RSSI Dist -> Default -69 | (Voir fichier Excel pour explication de cette valeur)
+        self.PATH_LOSS_EXPONENT = 2.75      # RSSI_Dist -> =2 dans un environnement libre. Probablement plus haut en intérieur entre [2,4] ou [0,5]
+        # self.MIN_ACCEPTED_RSSI = -64.0      # RSSI_Dist -> -64.0 est environ 7m, au-dessous les données ne font plus de sens
 
         # Variables globales
         self.available_beacons = self.load_beacons()
         self.map_locations = self.load_map_locations()
         self.etude_name = ""
+        self.etude_description = ""
         self.data_positions = []
         self.danger_zone = Polygon()
 
@@ -95,8 +96,8 @@ class LocationServerBackend():
         return "received"
 
     def calculate_distance_from_rssi(self, rssi):
-        if float(rssi) < self.MIN_ACCEPTED_RSSI:
-            return None
+        # if float(rssi) < self.MIN_ACCEPTED_RSSI:
+        #     return None
 
         return float(10**((self.MEASURED_POWER - float(rssi)) / (10 * self.PATH_LOSS_EXPONENT)))
 
@@ -118,7 +119,8 @@ class LocationServerBackend():
     
     def start_etude(self, params_etude):
         self.etude_name = params_etude["filename"]
-        self.data_logger = DataLogger(self.etude_name, self.available_beacons, f'./etudes/{self.etude_name}')
+        self.etude_description = params_etude["description"]
+        self.data_logger = DataLogger(self.etude_name, self.available_beacons, f'./etudes/{self.etude_name}', self.etude_description)
         self.ETUDE_RUNNING = True
         print(f'\nParamètres mis à jour : {params_etude}\nEnregistrement de l\'étude en cours ...\n')
         return "ok"
@@ -140,7 +142,7 @@ class LocationServerBackend():
                 
                 # Append data and save to disk
                 self.data_positions.append({'x':position[0], 'y':position[1]})
-                self.data_logger.save_to_disk(position)
+                self.data_logger.save_to_disk(position, self.MEASURED_POWER, self.PATH_LOSS_EXPONENT)
 
         if len(self.data_positions) > self.POSITION_HISTORY_SIZE:
             self.data_positions.pop(0)
@@ -152,6 +154,13 @@ class LocationServerBackend():
         for _, (beacon, _) in self.available_beacons.items():
             if beacon.distance is not None:
                 circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
+            
+            #print(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'))
+            #print(beacon.timestamp)
+            #print((datetime.now() - beacon.timestamp).total_seconds())
+            #print("\n")
+            #if (datetime.now() - beacon.timestamp).total_seconds() > 4.0:
+            #    beacon.reset()
 
         if len(circles) >= self.MIN_REQUIRED_TRILATERATION:
             position, _ = easy_least_squares(circles)

@@ -1,6 +1,7 @@
 function etude_start() {
 
     var filename = document.getElementById("etude-name");
+    var description = document.getElementById("etude-description");
     var b1 = document.getElementById("B1");
     var b2 = document.getElementById("B2");
     var b3 = document.getElementById("B3");
@@ -19,6 +20,7 @@ function etude_start() {
         data: JSON.stringify({
             "params": {
                 "filename": filename.value,
+                "description": description.value,
                 "B1": b1.value,
                 "B2": b2.value,
                 "B3": b3.value,
@@ -74,7 +76,7 @@ function etude_plot() {
         data: JSON.stringify({
             "params": {
                 "filename": filename.value
-           }
+            }
         }),
         dataType: "json",
         contentType:"application/json",
