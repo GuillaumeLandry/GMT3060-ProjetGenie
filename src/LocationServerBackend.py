@@ -12,7 +12,6 @@ from shapely.geometry.polygon import Polygon
 
 from utils.Beacon import Beacon
 from utils.MapLocation import MapLocation
-from utils.ParticleFilter import ParticleFilter
 from utils.KalmanFilter import KalmanFilter
 from utils.StudyPlotter import StudyPlotter
 from utils.DataLogger import DataLogger
@@ -154,13 +153,6 @@ class LocationServerBackend():
         for _, (beacon, _) in self.available_beacons.items():
             if beacon.distance is not None:
                 circles.append(Circle(float(beacon.x), float(beacon.y), float(beacon.distance)))
-            
-            #print(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'))
-            #print(beacon.timestamp)
-            #print((datetime.now() - beacon.timestamp).total_seconds())
-            #print("\n")
-            #if (datetime.now() - beacon.timestamp).total_seconds() > 4.0:
-            #    beacon.reset()
 
         if len(circles) >= self.MIN_REQUIRED_TRILATERATION:
             position, _ = easy_least_squares(circles)
